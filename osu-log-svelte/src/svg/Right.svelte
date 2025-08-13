@@ -1,0 +1,27 @@
+<svg
+   id="right"
+   version="1.1"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg"
+>
+   <defs id="defs1">
+      <linearGradient id="swatch2">
+         <stop
+            style="stop-color:#ffffff;stop-opacity:1;"
+            offset="0"
+            id="stop2"
+         />
+      </linearGradient>
+      <linearGradient id="swatch1">
+         <stop
+            style="stop-color:#ffffff;stop-opacity:1;"
+            offset="0"
+            id="stop1"
+         />
+      </linearGradient>
+   </defs>
+   <path
+      d="M 0.28627563,1.7004267 6.1142995,7.4360342 0.37869363,13.264058 A 1,1 0 0 0 1.8039495,14.666713 L 8.2379064,8.1290849 A 0.992,0.992 0 0 0 8.5242194,7.416773 0.997,0.997 0 0 0 8.2265544,6.7091293 L 1.6889295,0.27517171 A 1,1 0 0 0 0.28627563,1.7004267 Z"
+      id="right"
+   />
+</svg>

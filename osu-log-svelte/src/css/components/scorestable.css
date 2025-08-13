@@ -1,0 +1,106 @@
+	/* TODO: Have a look at the text positioning it looks wonkey*/
+	a {
+		color: var(--foreground);
+		text-decoration: none;
+	}
+
+	th {
+		position: relative;
+		overflow: hidden;
+		text-align: center;
+	}
+
+	th div {
+		position: absolute;
+		left: -50%;
+		top: 50%;
+		translate: 50% -50%;
+		display: inline-block;
+		width: 100%;
+		text-align: center;
+	}
+
+	div.title {
+		height: 90%;
+	}
+
+	tr {
+		display: grid;
+		margin-bottom: 1rem;
+		grid-template-columns: var(--scores-table-template);
+		border-radius: 30px;
+		overflow: hidden;
+		height: 3rem;
+		padding: 10px;
+	}
+
+	tbody tr:hover {
+		border-left: 8px solid var(--hover);
+	}
+
+	tbody tr {
+		border-left: 8px solid var(--foreground);
+		border-right: 8px solid var(--background);
+		transition: .25s;
+	}
+
+	.grade-icon {
+		position: relative;
+		height: 100%;
+	}
+
+	/*NOTE: GLOBAL HERE*/
+	:global(.grade-icon svg) {
+		position: absolute;
+		left: 50%;
+		top: 50%;
+		translate: -50% -50%;
+		height: 2rem;
+	}
+
+	.datatable-container {
+		position: relative;
+		height: 40rem;
+		overflow: scroll;
+		border-radius: 25px;
+	}
+
+	thead {
+		position: sticky;
+		top: 0;
+		color: var(--foreground);
+		z-index: 1;
+	}
+
+	:global(th svg) {
+		fill: var(--background);
+	}
+
+	table {
+		width: 100%;
+		color: var(--foreground);
+		border-collapse: collapse;
+	}
+
+	th {
+		position: relative;
+		overflow: hidden;
+		text-align: center;
+	}
+
+	thead tr {
+		background: var(--foreground);
+		color: var(--background);
+		padding: 10px 20px;
+		height: max-content;
+	}
+
+	tr {
+		display: grid;
+		grid-template-columns: var(--scores-table-template);
+		margin-bottom: 1rem;
+		border-radius: 30px;
+		overflow: hidden;
+		height: 3rem;
+		padding: 10px;
+	}

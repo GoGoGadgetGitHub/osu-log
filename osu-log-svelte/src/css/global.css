@@ -1,0 +1,51 @@
+:root {
+	/* Special */
+	--background: #0D0D10;
+	--background-rgba1: rgba(13, 13, 16, 1);
+	--background-rgba0: rgba(13, 13, 16, 0.6);
+	--foreground: #c2c2c3;
+	--cursor: #c2c2c3;
+
+	/* Colors */
+	--color0: #0D0D10;
+	--color1: #494040;
+	--color2: #5C514F;
+	--color3: #9C1B16;
+	--hover: #D2472A;
+	--color5: #996B60;
+	--color6: #D2936C;
+	--color7: #c2c2c3;
+	--color8: #58586b;
+	--color9: #494040;
+	--color10: #5C514F;
+	--color11: #9C1B16;
+	--color12: #D2472A;
+	--color13: #996B60;
+	--color14: #D2936C;
+	--color15: #c2c2c3;
+
+	/* Other Commen styles*/
+	--radius: 15px;
+	--transition: 0.3s;
+	/* Find good ratios for this */
+	--scores-table-template: 4rem 1fr 4rem 4rem 5rem 1fr 4rem 1fr;
+}
+
+body {
+	background-color: var(--background);
+	font-family: sans-serif;
+}
+
+main {
+	background-color: var(--background);
+}
+
+a {
+	color: var(--foreground);
+	text-decoration: none;
+}
+
+a:hover {
+	color: var(--hover);
+	transition: var(--transition);
+}

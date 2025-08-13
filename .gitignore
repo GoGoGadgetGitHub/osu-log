@@ -1,0 +1,7 @@
+osu-log-backend/.env
+
+*/node_modules
+
+osu-log-backend/bin
+osu-log-svelte/README.md
+osu-log-svelte/.svelte-kit
