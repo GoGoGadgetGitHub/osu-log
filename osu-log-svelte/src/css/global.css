@@ -28,7 +28,7 @@
 	--radius: 15px;
 	--transition: 0.3s;
 	/* Find good ratios for this */
-	--scores-table-template: 4rem 1fr 4rem 4rem 5rem 1fr 4rem 1fr;
+	--scores-table-template: 0.5fr 2fr 1fr 1fr 1fr 1fr 1fr 1fr;
 }
 
 body {

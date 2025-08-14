@@ -128,19 +128,19 @@
 							.beatmapset.covers.slimcover})"
 					>
 						<th class="grade-icon">
-							<svelte:component
-								this={score.passed ? gradeIcons[score.rank] : gradeIcons.F}
-							/>
-						</th>
-
-						<th>
-							<div class="title">
-								<a href={score.beatmap.url}>{score.beatmapset.title}</a>
+							<div class="icon-wrapper">
+								<svelte:component
+									this={score.passed ? gradeIcons[score.rank] : gradeIcons.F}
+								/>
 							</div>
 						</th>
 
+						<th class="title">
+							<a href={score.beatmap.url}>{score.beatmapset.title}</a>
+						</th>
+
 						<!--TODO:mod icons?-->
-						<th>
+						<th class="mods">
 							{#if score.mods}
 								<div>
 									{#each score.mods as { acronym }}
@@ -150,17 +150,15 @@
 							{/if}
 						</th>
 
-						<th>
-							<div>
-								{performance
-									? performance.attributes.stars.toFixed(2)
-									: score.beatmap.difficulty_rating}
-							</div>
+						<th class="stars">
+							{performance
+								? performance.attributes.stars.toFixed(2)
+								: score.beatmap.difficulty_rating}
 						</th>
 
-						<th><div>{(score.accuracy * 100).toFixed(2)}</div></th>
+						<th class="acc">{(score.accuracy * 100).toFixed(2)}</th>
 
-						<th>
+						<th class="hits">
 							<div>
 								{`${score.statistics.great ? score.statistics.great : 0}/
 								${score.statistics.ok ? score.statistics.ok : 0}/
@@ -169,14 +167,12 @@
 							</div>
 						</th>
 
-						<th>
-							<div>
-								{scoreMap.pp({ score, performance }).toFixed(2)}
-							</div>
+						<th class="pp">
+							{scoreMap.pp({ score, performance }).toFixed(2)}
 						</th>
 
-						<th class="last-col">
-							<div>{dateFormatter.format(new Date(score.ended_at))}</div>
+						<th class="last-col time">
+							{dateFormatter.format(new Date(score.ended_at))}
 						</th>
 					</tr>
 				{/await}
