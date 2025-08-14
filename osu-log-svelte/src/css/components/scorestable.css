@@ -9,7 +9,7 @@ a {
 	position: relative;
 	height: 40rem;
 	overflow: scroll;
-	border-radius: 25px;
+	border-radius: 20px;
 }
 
 table {
@@ -77,21 +77,8 @@ tbody tr:hover {
 
 /* ===== GRADE ICONS ===== */
 .grade-icon {
-	position: relative;
-	height: 100%;
-}
-
-:global(.grade-icon svg) {
-	position: absolute;
-	left: 50%;
-	top: 50%;
-	transform: translate(-50%, -50%);
-	height: 2rem;
-}
-
-/* ===== TITLE DIV ===== */
-div.title {
-	height: 90%;
+	display: flex;
+	align-items: center;
 }
 
 /* ===== TABLE FOOTER ===== */

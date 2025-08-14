@@ -127,12 +127,10 @@
 						style="background: center / contain no-repeat linear-gradient(to right, var(--background-rgba0), var(--background-rgba1) 95%), url({score
 							.beatmapset.covers.slimcover})"
 					>
-						<th>
-							<div class="grade-icon">
-								<svelte:component
-									this={score.passed ? gradeIcons[score.rank] : gradeIcons.F}
-								/>
-							</div>
+						<th class="grade-icon">
+							<svelte:component
+								this={score.passed ? gradeIcons[score.rank] : gradeIcons.F}
+							/>
 						</th>
 
 						<th>
