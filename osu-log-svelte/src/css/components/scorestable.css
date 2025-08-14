@@ -104,3 +104,9 @@
 		height: 3rem;
 		padding: 10px;
 	}
+
+	.table-below {
+		display: flex;
+		justify-content: space-between;
+		color: var(--foreground);
+	}

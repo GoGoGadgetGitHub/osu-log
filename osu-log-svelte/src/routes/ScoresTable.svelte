@@ -10,19 +10,17 @@
 	import X from "../svg/X.svelte";
 	import Star from "../svg/Star.svelte";
 	import { crossfade, draw, fade, slide } from "svelte/transition";
+	import Pagination from "./Pagination.svelte";
 
-	let { sessionScores } = $props();
+	let { sessionScores, maxSessions, changeSession } = $props();
 	let gradeIcons = { X, XH: Xh, S, SH: Sh, A, B, C, D, F };
 
-	//TODO: maybe move this away from here and into a seprate utility module so that i can use this more globally
-	let options = {
+	let dateFormatter = new Intl.DateTimeFormat("en-US", {
 		month: "short",
 		day: "numeric",
 		hour: "numeric",
 		minute: "numeric",
-	};
-	let dateFormatter = new Intl.DateTimeFormat("en-US", options);
-	//end
+	});
 
 	async function loadImage(src) {
 		return new Promise((resolve) => {
@@ -31,6 +29,7 @@
 			img.src = src;
 		});
 	}
+
 	//NOTE: this is pretty slow
 	const scoreMap = {
 		sr: (score) => {
@@ -186,6 +185,23 @@
 			{/each}
 		</tbody>
 	</table>
+</div>
+<div class="table-below">
+	{#if maxSessions}
+		<Pagination {maxSessions} {changeSession} />
+	{/if}
+	{#if sessionScores.scores}
+		<div>{sessionScores.scores.length} Scores</div>
+		<div>
+			{$inspect(sessionScores)}
+			{dateFormatter.format(new Date(sessionScores.meta.time.start))}
+			-
+			{dateFormatter.format(new Date(sessionScores.meta.time.end))}
+		</div>
+		<div>
+			{sessionScores.meta.time.duration}
+		</div>
+	{/if}
 </div>
 
 <style>

@@ -10,21 +10,13 @@
     let loading = $state(false);
     let sessionID = $state(0);
     let userData = $state("");
-    let maxSessions = $state(0);
-    let sessionScores = $state({});
     let error = $state("");
+    let sessionScores = $state({});
+    let maxSessions = $state(0);
 
-    //TODO: maybe move this away from here and into a seprate utility module so that i can use this more globally
-    let options = {
-        month: "short",
-        day: "numeric",
-        hour: "numeric",
-        minute: "numeric",
-    };
-    let dateFormatter = new Intl.DateTimeFormat("en-US", options);
-    //end
-
-    //TODO: I'd like to move handle track clicked and change session to a better place
+    //I still can't move the away from her since the Username component needs it
+    //so this and all of the states it mutates needs to stay here
+    //that includes changeSession
     async function handelTrackClicked(usr) {
         error = "";
         loading = true;
@@ -68,32 +60,14 @@
     }
 </script>
 
-{$inspect(sessionScores)}
+{$inspect(maxSessions)}
 
 <div class="main">
     <Username callback={handelTrackClicked} {error} />
     {#if userData !== ""}
         <Profile {userData} />
-        <ScoresTable {sessionScores} />
+        <ScoresTable {sessionScores} {maxSessions} {changeSession} />
     {/if}
-    <!-- TODO: move Table Below to the ScoresTable -->
-    <div class="table-below">
-        {#if maxSessions}
-            <Pagination {maxSessions} {changeSession} />
-        {/if}
-        {#if sessionScores.scores}
-            <div>{sessionScores.scores.length} Scores</div>
-            <div>
-                {$inspect(sessionScores)}
-                {dateFormatter.format(new Date(sessionScores.meta.time.start))}
-                -
-                {dateFormatter.format(new Date(sessionScores.meta.time.end))}
-            </div>
-            <div>
-                {sessionScores.meta.time.duration}
-            </div>
-        {/if}
-    </div>
     <div class="session-summary">
         <ul>
             <li>Maps played:</li>
@@ -128,11 +102,5 @@
         background: var(--foreground);
         padding: 0.5rem;
         border-radius: var(--radius);
-    }
-
-    .table-below {
-        display: flex;
-        justify-content: space-between;
-        color: var(--foreground);
     }
 </style>
