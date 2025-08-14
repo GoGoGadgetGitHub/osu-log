@@ -1,112 +1,102 @@
-	/* TODO: Have a look at the text positioning it looks wonkey*/
-	a {
-		color: var(--foreground);
-		text-decoration: none;
-	}
+/* ===== GLOBAL STYLES ===== */
+a {
+	color: var(--foreground);
+	text-decoration: none;
+}
 
-	th {
-		position: relative;
-		overflow: hidden;
-		text-align: center;
-	}
+/* ===== TABLE CONTAINER ===== */
+.datatable-container {
+	position: relative;
+	height: 40rem;
+	overflow: scroll;
+	border-radius: 25px;
+}
 
-	th div {
-		position: absolute;
-		left: -50%;
-		top: 50%;
-		translate: 50% -50%;
-		display: inline-block;
-		width: 100%;
-		text-align: center;
-	}
+table {
+	width: 100%;
+	color: var(--foreground);
+	border-collapse: collapse;
+}
 
-	div.title {
-		height: 90%;
-	}
+/* ===== TABLE HEADER ===== */
+thead {
+	position: sticky;
+	top: 0;
+	color: var(--foreground);
+	z-index: 1;
+}
 
-	tr {
-		display: grid;
-		margin-bottom: 1rem;
-		grid-template-columns: var(--scores-table-template);
-		border-radius: 30px;
-		overflow: hidden;
-		height: 3rem;
-		padding: 10px;
-	}
+thead tr {
+	background: var(--foreground);
+	color: var(--background);
+	padding: 10px 20px;
+	height: max-content;
+	border-radius: 30px;
+}
 
-	tbody tr:hover {
-		border-left: 8px solid var(--hover);
-	}
+th {
+	position: relative;
+	overflow: hidden;
+	text-align: center;
+}
 
-	tbody tr {
-		border-left: 8px solid var(--foreground);
-		border-right: 8px solid var(--background);
-		transition: .25s;
-	}
+th div {
+	position: absolute;
+	left: -50%;
+	top: 50%;
+	transform: translate(50%, -50%);
+	display: inline-block;
+	width: 100%;
+	text-align: center;
+}
 
-	.grade-icon {
-		position: relative;
-		height: 100%;
-	}
+:global(th svg) {
+	fill: var(--background);
+}
 
-	/*NOTE: GLOBAL HERE*/
-	:global(.grade-icon svg) {
-		position: absolute;
-		left: 50%;
-		top: 50%;
-		translate: -50% -50%;
-		height: 2rem;
-	}
+/* ===== TABLE ROWS ===== */
+tr {
+	display: grid;
+	grid-template-columns: var(--scores-table-template);
+	margin-bottom: 1rem;
+	border-radius: 30px 0 0 30px;
+	overflow: hidden;
+	height: 3rem;
+	padding: 10px;
+}
 
-	.datatable-container {
-		position: relative;
-		height: 40rem;
-		overflow: scroll;
-		border-radius: 25px;
-	}
+tbody tr {
+	border-left: 8px solid var(--foreground);
+	border-right: 8px solid var(--background);
+	transition: 0.25s;
+}
 
-	thead {
-		position: sticky;
-		top: 0;
-		color: var(--foreground);
-		z-index: 1;
-	}
+tbody tr:hover {
+	border-left: 8px solid var(--hover);
+}
 
-	:global(th svg) {
-		fill: var(--background);
-	}
+/* ===== GRADE ICONS ===== */
+.grade-icon {
+	position: relative;
+	height: 100%;
+}
 
-	table {
-		width: 100%;
-		color: var(--foreground);
-		border-collapse: collapse;
-	}
+:global(.grade-icon svg) {
+	position: absolute;
+	left: 50%;
+	top: 50%;
+	transform: translate(-50%, -50%);
+	height: 2rem;
+}
 
-	th {
-		position: relative;
-		overflow: hidden;
-		text-align: center;
-	}
+/* ===== TITLE DIV ===== */
+div.title {
+	height: 90%;
+}
 
-	thead tr {
-		background: var(--foreground);
-		color: var(--background);
-		padding: 10px 20px;
-		height: max-content;
-	}
-
-	tr {
-		display: grid;
-		grid-template-columns: var(--scores-table-template);
-		margin-bottom: 1rem;
-		border-radius: 30px;
-		overflow: hidden;
-		height: 3rem;
-		padding: 10px;
-	}
-
-	.table-below {
-		display: flex;
-		justify-content: space-between;
-		color: var(--foreground);
-	}
+/* ===== TABLE FOOTER ===== */
+.table-below {
+	display: flex;
+	justify-content: space-between;
+	color: var(--foreground);
+}
