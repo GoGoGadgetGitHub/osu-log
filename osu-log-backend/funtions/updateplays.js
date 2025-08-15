@@ -171,25 +171,29 @@ function getTimeStamps(score, prevScore, latestScore) {
 }
 
 function calculateBpm(score) {
+  const speedUpMods = ["DT", "NC"];
+  const slowDownMods = ["HT", "DC"];
   const mods = score.mods;
-  if (!mods.length) {
+  if (!mods.length || mods.length == 1 && mods[0].acronym === "CL") {
     return score.beatmap.bpm;
   }
-  let multiplier;
+
   for (const mod of mods) {
-    if (mod.settings) {
+    if (
+      mod.settings && [...speedUpMods, ...slowDownMods].includes(mod.acronym)
+    ) {
       multiplier = mod.settings.speed_change;
       break;
     }
-    if (mod.acronym == "DT" || mod.acronym == "NC") {
-      multiplier = 1.5;
-    } else if (mod.acronym == "HT" || mod.acronym == "DC") {
-      multiplier = 0.75;
+
+    if (speedUpMods.includes(mod.acronym)) {
+      return score.beatmap.bpm * 1.5;
+    } else if (slowDownMods.includes(mod.acronym)) {
+      return score.beatmap.bpm * 0.75;
     } else {
-      multiplier = 1;
+      return score.beatmap.bpm;
     }
   }
-  return score.beatmap.bpm * multiplier;
 }
 
 //TODO: Stop using this it's not really usefull use axios

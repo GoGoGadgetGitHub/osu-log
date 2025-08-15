@@ -98,7 +98,8 @@ async function generateStatsForSession(sessionID, osu_user_id) {
 async function getAverage({ field, sessionID, osu_user_id }) {
   const query =
     `select avg((${field})::numeric) from scores where osu_user_id like '$1' and session_id = $2;`;
-  const result = await dbQuery(query, db.one, [sessionID, osu_user_id]);
+  const result = await dbQuery(query, db.one, [osu_user_id, sessionID]);
+  console.log(result);
   if (result == "FAIL_DB") {
     return result;
   }
