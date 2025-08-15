@@ -98,6 +98,18 @@ tbody tr:hover {
 	color: var(--foreground);
 }
 
+.stars::after {
+	content: " ★";
+}
+
+.acc::after {
+	content: " %";
+}
+
+.pp::after {
+	content: " pp";
+}
+
 @media (max-width:800px) {
 	tr {
 		height: 4rem;
@@ -131,9 +143,6 @@ tbody tr:hover {
 		grid-row: 1;
 	}
 
-	.stars::after {
-		content: " ★";
-	}
 
 	.title {
 		grid-column: 2;
@@ -145,16 +154,8 @@ tbody tr:hover {
 		grid-column: 3;
 	}
 
-	.pp::after {
-		content: " pp";
-	}
-
 	.time {
 		display: none;
-	}
-
-	.acc::after {
-		content: " %";
 	}
 
 	.table-below {

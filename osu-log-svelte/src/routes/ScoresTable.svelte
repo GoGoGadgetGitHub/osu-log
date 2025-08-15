@@ -12,6 +12,8 @@
 	import { crossfade, draw, fade, slide } from "svelte/transition";
 	import Pagination from "./Pagination.svelte";
 
+	//TODO: add scores sort dropdown for mobile
+
 	let { sessionScores, maxSessions, changeSession } = $props();
 	let gradeIcons = { X, XH: Xh, S, SH: Sh, A, B, C, D, F };
 

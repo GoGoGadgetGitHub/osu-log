@@ -1,15 +1,6 @@
 const { getScoresForSession } = require("./getScoresForSession.js");
 const { db, dbQuery, pgp } = require("../database.js");
-//end point will need:
-//osu user id
-//session id
 
-//TODO: stats i want to include for now:
-//Average aim difficulty
-//Average speed difficulty
-//
-//NOTE: stats that use the performance object will take a while to calculate
-//I want to use queries to generate the stats i think, using js could be slow
 async function generateStatsForSessionEndpoint(req, res) {
   const osu_user_id = req.params.userID;
   const sessionID = Number(req.params.sessionID);
@@ -60,42 +51,43 @@ async function generateStatsForSession(sessionID, osu_user_id) {
     return;
   }
 
-  const numberOfPlays = session.scores.length;
-  const numberOfPasses = session.meta.passes;
-  const numberOfFails = session.meta.fails;
-
-  const avgPP = await getAverage(
-    "performance->'perf'->>'pp'",
+  const options = {
+    field: undefined,
     sessionID,
     osu_user_id,
-  );
+  };
 
-  const avgSr = await getAverage(
-    "performance->'attributes'->>'stars'",
-    sessionID,
-    osu_user_id,
-  );
+  const plays = session.scores.length;
+  const passes = session.meta.passes;
+  const fails = session.meta.fails;
+
+  options.field = "performance->'perf'->>'pp'";
+  const avgPP = await getAverage(options);
+  const minMaxPP = await getMinMax(options);
+
+  options.field = "performance->'attributes'->>'stars'";
+  const avgSr = await getAverage(options);
+  const minMaxSr = await getMinMax(options);
+
+  options.field = "score->>'accuracy'";
+  const avgAcc = await getAverage(options);
+  const minMaxAcc = await getMinMax(options);
 
   const avgBpm = getAverageBpm(session);
-
-  const avgAcc = await getAverage(
-    "score->>'accuracy'",
-    sessionID,
-    osu_user_id,
-  );
+  const minMaxBpm = getMinMaxBpm(session);
 
   if (avgSr === "FAIL-DB" || avgAcc === "FAIL-DB" || avgPP === "FAIL-DB") {
     return "FAIL-DB";
   }
 
   const stat = {
-    numberOfFails,
-    numberOfPasses,
-    numberOfPlays,
-    avgBpm,
-    avgSr,
-    avgPP,
-    avgAcc,
+    fails,
+    passes,
+    plays,
+    bpm: { avgBpm, ...minMaxBpm },
+    sr: { avgSr, ...minMaxSr },
+    pp: { avgPP, ...minMaxPP },
+    acc: { avgAcc, ...minMaxAcc },
   };
 
   const sessionTime = session.meta.time.start;
@@ -103,11 +95,39 @@ async function generateStatsForSession(sessionID, osu_user_id) {
   insertOrUpdateStats(stat, osu_user_id, sessionID, sessionTime);
 }
 
-async function getAverage(field, osu_user_id, sessionID) {
+async function getAverage({ field, sessionID, osu_user_id }) {
   const query =
-    `select avg((${field})::numeric) from scores where osu_user_id like '$2' and session_id = $3;`;
-  const result = await dbQuery(query, db.one, [field, sessionID, osu_user_id]);
+    `select avg((${field})::numeric) from scores where osu_user_id like '$1' and session_id = $2;`;
+  const result = await dbQuery(query, db.one, [sessionID, osu_user_id]);
+  if (result == "FAIL_DB") {
+    return result;
+  }
   return result.avg;
+}
+
+async function getMinMax({ field, sessionID, osu_user_id }) {
+  let query;
+
+  const minQuery = `min((${field})::numeric)`;
+  const maxQuery = `max((${field})::numeric)`;
+
+  query =
+    `select ${minQuery} from scores where osu_user_id like '$1' and session_id = $2;`;
+  const min = await dbQuery(query, db.one, [osu_user_id, sessionID]);
+  if (min == "FAIL_DB") {
+    return min;
+  }
+
+  query =
+    `select ${maxQuery} from scores where osu_user_id like '$1' and session_id = $2;`;
+  const max = await dbQuery(query, db.one, [osu_user_id, sessionID]);
+  if (max == "FAIL_DB") {
+    return max;
+  }
+
+  console.log(min, max);
+
+  return { min: min.min, max: max.max };
 }
 
 function getAverageBpm(session) {
@@ -116,6 +136,16 @@ function getAverageBpm(session) {
     sum += score.beatmap.bpm;
   }
   return sum / session.scores.length;
+}
+
+function getMinMaxBpm(session) {
+  let min = session.scores[0].score.beatmap.bpm;
+  let max = session.scores[0].score.beatmap.bpm;
+  for (const { score } of session.scores) {
+    min = min > score.beatmap.bpm ? score.beatmap.bpm : min;
+    max = max < score.beatmap.bpm ? score.beatmap.bpm : max;
+  }
+  return { min, max };
 }
 
 module.exports = { generateStatsForSession, generateStatsForSessionEndpoint };
