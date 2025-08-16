@@ -187,15 +187,11 @@
 		<Pagination {maxSessions} {changeSession} />
 	{/if}
 	{#if sessionScores.scores}
-		<div>{sessionScores.scores.length} Scores</div>
 		<div>
 			{$inspect(sessionScores)}
 			{dateFormatter.format(new Date(sessionScores.meta.time.start))}
 			-
 			{dateFormatter.format(new Date(sessionScores.meta.time.end))}
-		</div>
-		<div>
-			{sessionScores.meta.time.duration}
 		</div>
 	{/if}
 </div>

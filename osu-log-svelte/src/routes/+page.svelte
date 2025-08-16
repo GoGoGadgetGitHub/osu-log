@@ -6,6 +6,7 @@
     import Star from "../svg/Star.svelte";
     import { slide } from "svelte/transition";
     import axios from "axios";
+    import SessionSummary from "./SessionSummary.svelte";
 
     let loading = $state(false);
     let sessionID = $state(0);
@@ -67,40 +68,23 @@
     {#if userData !== ""}
         <Profile {userData} />
         <ScoresTable {sessionScores} {maxSessions} {changeSession} />
+        <SessionSummary {sessionScores} />
     {/if}
-    <div class="session-summary">
-        <ul>
-            <li>Maps played:</li>
-            <li>Maps passed:</li>
-            <li>Average pp:</li>
-            <li>Average sr:</li>
-            <li>Average bpm:</li>
-            <li>Average accuracy:</li>
-            <li></li>
-        </ul>
-    </div>
 </div>
 
 <style>
     .main {
-        width: 90%;
+        width: 80%;
         margin: auto;
         display: grid;
         row-gap: 1rem;
     }
-
-    .session-summary ul {
-        display: flex;
-        justify-content: space-evenly;
-        color: var(--background);
-        margin: 0;
-        padding: 0;
-        list-style-type: none;
-    }
-
-    .session-summary {
-        background: var(--foreground);
-        padding: 0.5rem;
-        border-radius: var(--radius);
+    @media (max-width: 800px) {
+        .main {
+            width: 100%;
+            margin: auto;
+            display: grid;
+            row-gap: 1rem;
+        }
     }
 </style>
