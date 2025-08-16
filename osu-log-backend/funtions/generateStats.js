@@ -88,6 +88,8 @@ async function generateStatsForSession(sessionID, osu_user_id) {
   const avgBpm = await getAverage(options);
   const minMaxBpm = await getMinMax(options);
 
+  const gradeCounts = await countGrades({ sessionID, osu_user_id });
+
   //TODO: add the rest of the db results
   if (avgSr === "FAIL-DB" || avgAcc === "FAIL-DB" || avgPP === "FAIL-DB") {
     return "FAIL-DB";
@@ -100,6 +102,7 @@ async function generateStatsForSession(sessionID, osu_user_id) {
     sr: { avg: avgSr, ...minMaxSr },
     pp: { avg: avgPP, ...minMaxPP },
     acc: { avg: avgAcc, ...minMaxAcc },
+    gradeCounts,
   };
 
   const sessionTime = await dbQuery(
@@ -122,6 +125,27 @@ async function getAverage({ field, sessionID, osu_user_id }) {
     return result;
   }
   return Number(result.avg);
+}
+
+async function countGrades({ sessionID, osu_user_id }) {
+  let query = "select ";
+  const ranks = ["S", "SH", "X", "XH", "A", "B", "C", "D"];
+
+  for (const rank of ranks) {
+    query +=
+      `sum(case when score->>'rank' like '${rank}' and score->>'passed' like 'true' then 1 else 0 end) as ${rank}`;
+    if (rank !== ranks[ranks.length - 1]) {
+      query += ", ";
+    }
+  }
+
+  query += " from scores where osu_user_id like '$1' and session_id = $2;";
+
+  const result = await dbQuery(query, db.one, [osu_user_id, sessionID]);
+  if (result == "FAIL_DB") {
+    return result;
+  }
+  console.log(result);
 }
 
 async function getMinMax({ field, sessionID, osu_user_id }) {
