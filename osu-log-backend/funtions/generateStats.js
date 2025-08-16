@@ -9,22 +9,22 @@ async function generateStatsForSessionEndpoint(req, res) {
 }
 
 async function insertOrUpdateStats(stat, osu_user_id, sessionID, sessionTime) {
+  console.log(`Inserting stats for session ${sessionID}`);
+
+  const table = { table: "stats" };
+  const ststsColumn = {
+    name: "stat_obj",
+    cast: "jsonb",
+  };
+
+  const updateColumnTemplate = new pgp.helpers.ColumnSet([ststsColumn], table);
+
   const insertColumnTemplate = new pgp.helpers.ColumnSet([
     "osu_user_id",
     "session_id",
     "session_time",
-    {
-      name: "stat_obj",
-      cast: "jsonb",
-    },
-  ], { table: "stats" });
-
-  const updateColumnTemplate = new pgp.helpers.ColumnSet([
-    {
-      name: "stat_obj",
-      cast: "jsonb",
-    },
-  ], { table: "stats" });
+    ststsColumn,
+  ], table);
 
   const tableRow = {
     osu_user_id,
@@ -35,18 +35,31 @@ async function insertOrUpdateStats(stat, osu_user_id, sessionID, sessionTime) {
 
   const set = pgp.helpers.sets({ stat_obj: stat }, updateColumnTemplate);
   const insert = pgp.helpers.insert(tableRow, insertColumnTemplate);
+
   const query = insert +
     " on conflict (osu_user_id, session_id) do update set " + set;
-  return dbQuery(query, db.none);
+
+  const result = await dbQuery(query, db.none);
+  if (result === "FAIL-DB") {
+    return result;
+  }
 }
 
 async function generateStatsForSession(sessionID, osu_user_id) {
-  console.log(`Generating stats for ${sessionID}...`);
-  const session = await getScoresForSession(osu_user_id, sessionID);
-  if (session === "FAIL-DB") {
-    return session;
+  console.log(`Generating stats for session ${sessionID}`);
+  let numPlays = await dbQuery(
+    "select count(*) from scores where osu_user_id like '$1' and session_id=$2",
+    db.one,
+    [osu_user_id, sessionID],
+  );
+
+  if (numPlays === "FAIL_DB") {
+    return numPlays;
   }
-  if (session === "NOSCORES") {
+
+  numPlays = Number(numPlays.count);
+
+  if (numPlays.count === 0) {
     console.log("Nothing to do here :)");
     return;
   }
@@ -57,9 +70,7 @@ async function generateStatsForSession(sessionID, osu_user_id) {
     osu_user_id,
   };
 
-  const plays = session.scores.length;
-  const passes = session.meta.passes;
-  const fails = session.meta.fails;
+  const plays = numPlays;
 
   options.field = "performance->'perf'->>'pp'";
   const avgPP = await getAverage(options);
@@ -73,37 +84,44 @@ async function generateStatsForSession(sessionID, osu_user_id) {
   const avgAcc = await getAverage(options);
   const minMaxAcc = await getMinMax(options);
 
-  const avgBpm = getAverageBpm(session);
-  const minMaxBpm = getMinMaxBpm(session);
+  options.field = "score->'beatmap'->>'bpm'";
+  const avgBpm = await getAverage(options);
+  const minMaxBpm = await getMinMax(options);
 
+  //TODO: add the rest of the db results
   if (avgSr === "FAIL-DB" || avgAcc === "FAIL-DB" || avgPP === "FAIL-DB") {
     return "FAIL-DB";
   }
 
   const stat = {
-    fails,
-    passes,
+    ...await getCountFailsAndPasses(sessionID, osu_user_id, numPlays),
     plays,
-    bpm: { avgBpm, ...minMaxBpm },
-    sr: { avgSr, ...minMaxSr },
-    pp: { avgPP, ...minMaxPP },
-    acc: { avgAcc, ...minMaxAcc },
+    bpm: { avg: avgBpm, ...minMaxBpm },
+    sr: { avg: avgSr, ...minMaxSr },
+    pp: { avg: avgPP, ...minMaxPP },
+    acc: { avg: avgAcc, ...minMaxAcc },
   };
 
-  const sessionTime = session.meta.time.start;
+  const sessionTime = await dbQuery(
+    "select set_at from scores where osu_user_id like '$1' and session_id = $2 order by set_at desc limit 1",
+    db.one,
+    [osu_user_id, sessionID],
+  );
+  if (sessionTime === "FAIL-DB") {
+    return sessionTime;
+  }
 
-  insertOrUpdateStats(stat, osu_user_id, sessionID, sessionTime);
+  await insertOrUpdateStats(stat, osu_user_id, sessionID, sessionTime.set_at);
 }
 
 async function getAverage({ field, sessionID, osu_user_id }) {
   const query =
     `select avg((${field})::numeric) from scores where osu_user_id like '$1' and session_id = $2;`;
   const result = await dbQuery(query, db.one, [osu_user_id, sessionID]);
-  console.log(result);
   if (result == "FAIL_DB") {
     return result;
   }
-  return result.avg;
+  return Number(result.avg);
 }
 
 async function getMinMax({ field, sessionID, osu_user_id }) {
@@ -126,27 +144,23 @@ async function getMinMax({ field, sessionID, osu_user_id }) {
     return max;
   }
 
-  console.log(min, max);
-
-  return { min: min.min, max: max.max };
+  return { min: Number(min.min), max: Number(max.max) };
 }
 
-function getAverageBpm(session) {
-  let sum = 0;
-  for (const { score } of session.scores) {
-    sum += score.beatmap.bpm;
-  }
-  return sum / session.scores.length;
-}
+async function getCountFailsAndPasses(sessionID, osu_user_id, numberOfScores) {
+  const query =
+    "select count(*) from scores where (score ->> 'passed') = 'false' and session_id = $1 and osu_user_id like $2";
+  const fails = await dbQuery(query, db.one, [sessionID, `${osu_user_id}`]);
 
-function getMinMaxBpm(session) {
-  let min = session.scores[0].score.beatmap.bpm;
-  let max = session.scores[0].score.beatmap.bpm;
-  for (const { score } of session.scores) {
-    min = min > score.beatmap.bpm ? score.beatmap.bpm : min;
-    max = max < score.beatmap.bpm ? score.beatmap.bpm : max;
+  if (fails === "FAIL-DB") {
+    console.log("Failed to get number of fails form db...");
+    return { fails, passes: 0 };
   }
-  return { min, max };
+
+  return {
+    fails: Number(fails.count),
+    passes: numberOfScores - Number(fails.count),
+  };
 }
 
 module.exports = { generateStatsForSession, generateStatsForSessionEndpoint };

@@ -107,8 +107,8 @@ async function addScores(osu_user_id, token) {
 
   let result = await insertScores(scoresToBeInserted);
 
-  for (const session of sessionsChanged) {
-    result = await generateStatsForSession(session, osu_user_id);
+  for (const sessionID of sessionsChanged) {
+    result = await generateStatsForSession(sessionID, osu_user_id);
   }
 
   if (result !== "FAIL-DB") {

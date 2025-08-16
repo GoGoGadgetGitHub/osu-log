@@ -25,22 +25,27 @@ async function getScoresForSession(osu_user_id, sessionID) {
   const duration =
     `${diffrence.getHours()} hours ${diffrence.getMinutes()} minutes`;
 
-  const { fails, passes } = await getCountFailsAndPasses(
-    sessionID,
-    osu_user_id,
-    scores.length,
-  );
-
   const session = {
     scores,
     meta: {
       time: { start, end, duration },
-      fails,
-      passes,
       id: sessionID,
+      stats: {
+        ...await getSessionStats(osu_user_id, sessionID),
+      },
     },
   };
   return session;
+}
+
+async function getSessionStats(osu_user_id, sessionID) {
+  const query =
+    "select stat_obj from stats where osu_user_id like $1 and session_id = $2";
+  const result = await dbQuery(query, db.one, [
+    osu_user_id.toString(),
+    sessionID,
+  ]);
+  return { ...result.stat_obj };
 }
 
 async function getScoresForSessionEndpoint(req, res) {
@@ -60,22 +65,6 @@ async function getScoresForSessionEndpoint(req, res) {
   }
 
   res.status(200).json(sessionScores);
-}
-
-async function getCountFailsAndPasses(sessionID, osu_user_id, numberOfScores) {
-  const query =
-    "select count(*) from scores where (score ->> 'passed') = 'false' and session_id = $1 and osu_user_id like $2";
-  const fails = await dbQuery(query, db.one, [sessionID, `${osu_user_id}`]);
-
-  if (fails === "FAIL-DB") {
-    console.log("Failed to get number of fails form db...");
-    return { fails, passes: 0 };
-  }
-
-  return {
-    fails: Number(fails.count),
-    passes: numberOfScores - Number(fails.count),
-  };
 }
 
 async function getSession(sessionID, osu_user_id) {
