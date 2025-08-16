@@ -142,10 +142,7 @@ async function countGrades({ sessionID, osu_user_id }) {
   query += " from scores where osu_user_id like '$1' and session_id = $2;";
 
   const result = await dbQuery(query, db.one, [osu_user_id, sessionID]);
-  if (result == "FAIL_DB") {
-    return result;
-  }
-  console.log(result);
+  return result;
 }
 
 async function getMinMax({ field, sessionID, osu_user_id }) {
