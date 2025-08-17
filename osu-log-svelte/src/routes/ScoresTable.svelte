@@ -11,10 +11,11 @@
 	import Star from "../svg/Star.svelte";
 	import { crossfade, draw, fade, slide } from "svelte/transition";
 	import Pagination from "./Pagination.svelte";
+	import Loader from "./Loader.svelte";
 
 	//TODO: add scores sort dropdown for mobile
 
-	let { sessionScores, maxSessions, changeSession } = $props();
+	let { sessionScores, maxSessions, changeSession, loading } = $props();
 	let gradeIcons = { X, XH: Xh, S, SH: Sh, A, B, C, D, F };
 
 	let dateFormatter = new Intl.DateTimeFormat("en-US", {
@@ -123,7 +124,9 @@
 		</thead>
 		<tbody>
 			{#each sessionScores.scores as { score, performance }}
-				{#await loadImage(score.beatmapset.covers.slimcover) then _}
+				{#await loadImage(score.beatmapset.covers.slimcover)}
+					<Loader />
+				{:then}
 					<tr
 						in:fade
 						style="background: center / contain no-repeat linear-gradient(to right, var(--background-rgba0), var(--background-rgba1) 95%), url({score

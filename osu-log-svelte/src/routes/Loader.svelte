@@ -1,0 +1,45 @@
+<div class="loader"></div>
+
+<style>
+    @import url("../css/global.css");
+    .loader {
+        position: fixed;
+        height: 15px;
+        aspect-ratio: 4;
+        --_g: no-repeat
+            radial-gradient(farthest-side, var(--foreground) 90%, #0000);
+        background:
+            var(--_g) left,
+            var(--_g) right;
+        background-size: 25% 100%;
+        display: grid;
+        margin: auto;
+        top: 50%;
+        left: 50%;
+        translate: -50% -50%;
+    }
+    .loader:before,
+    .loader:after {
+        content: "";
+        height: inherit;
+        aspect-ratio: 1;
+        grid-area: 1/1;
+        margin: auto;
+        border-radius: 50%;
+        transform-origin: -100% 50%;
+        background: var(--hover);
+        animation: l49 1s infinite linear;
+    }
+    .loader:after {
+        transform-origin: 200% 50%;
+        --s: -1;
+        animation-delay: -0.5s;
+    }
+
+    @keyframes l49 {
+        58%,
+        100% {
+            transform: rotate(calc(var(--s, 1) * 1turn));
+        }
+    }
+</style>
