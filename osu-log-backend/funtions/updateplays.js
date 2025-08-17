@@ -1,15 +1,19 @@
 const { db, pgp, dbQuery } = require("../database.js");
 const api = require("../osuAPITemplate.js");
 const { calculatePerformanceForScores } = require("./calculator.js");
-const { generateStatsForSession } = require("./generateStats.js");
+const { generateStatsForSession } = require(
+  "./generateStats.js",
+);
+const err = require("../errors.js");
 
 const SESSION_GAP = 120;
 
 async function getLatestScore(osu_user_id) {
   let latestScore;
   try {
-    latestScore = await db.oneOrNone(
+    latestScore = await dbQuery(
       "select * from scores where osu_user_id like '$1' order by set_at desc limit 1;",
+      db.oneOrNone,
       [osu_user_id],
     );
     console.log(`User had scores saved: ${!!latestScore}`);
@@ -26,10 +30,9 @@ async function getLatestScore(osu_user_id) {
     }
   } catch (e) {
     console.log(
-      `Unexpected error when trying to fetch last score for user: ${osu_user_id}`,
+      `Error when trying to fetch last score for user: ${osu_user_id}`,
     );
-    console.log(e);
-    return "FAIL-DB";
+    throw e;
   }
 }
 
@@ -41,9 +44,11 @@ async function addScores(osu_user_id, token) {
     return "FAIL-API";
   }
 
-  const latestScore = await getLatestScore(osu_user_id);
-  if (latestScore === "FAIL-DB") {
-    return latestScore;
+  let latestScore;
+  try {
+    latestScore = await getLatestScore(osu_user_id);
+  } catch (e) {
+    throw e;
   }
 
   let session_id = latestScore ? latestScore.session_id : 0;
@@ -90,14 +95,16 @@ async function addScores(osu_user_id, token) {
 
   if (scoresToBeInserted.length === 0) {
     console.log("No new scores");
-    return "NONEW";
+    throw (err.NO_NEW);
   }
 
-  const performances = await calculatePerformanceForScores(
-    scoresToBeInserted.map((score) => score.score),
-  );
-  if (performances === "FAIL-DB") {
-    return performances;
+  let performances;
+  try {
+    performances = await calculatePerformanceForScores(
+      scoresToBeInserted.map((score) => score.score),
+    );
+  } catch (e) {
+    throw e;
   }
 
   scoresToBeInserted.forEach((score, index) => {
@@ -105,26 +112,30 @@ async function addScores(osu_user_id, token) {
     score.score.beatmap.bpm = calculateBpm(score.score);
   });
 
-  let result = await insertScores(scoresToBeInserted);
-
-  for (const sessionID of sessionsChanged) {
-    result = await generateStatsForSession(sessionID, osu_user_id);
+  try {
+    await insertScores(scoresToBeInserted);
+  } catch (e) {
+    throw e;
   }
 
-  if (result !== "FAIL-DB") {
-    return "SUCSESS";
+  for (const sessionID of sessionsChanged) {
+    try {
+      await generateStatsForSession(sessionID, osu_user_id);
+    } catch (e) {
+      throw e;
+    }
   }
 }
 
 async function addScoresEndpoint(req, res) {
   const osu_user_id = req.params.userID;
-  const update = await addScores(osu_user_id);
-
-  if (!update || update.status !== "SUCSESS") {
-    res.status(500).send(update ? update : "FAIL-UNKNOWN");
-    return;
+  try {
+    await addScores(osu_user_id);
+  } catch (e) {
+    console.log("Error, could not add scores...");
+    res.status(500).json(e);
   }
-  res.status(200).send(update);
+  res.status(200);
 }
 
 async function insertScores(scoresToBeInserted) {
@@ -137,12 +148,14 @@ async function insertScores(scoresToBeInserted) {
     "performance",
   ], { table: "scores" });
 
-  const result = await dbQuery(
-    pgp.helpers.insert(scoresToBeInserted, columnTemplate),
-    db.none,
-  );
-  if (result === "FAIL-DB") {
-    return result;
+  try {
+    await dbQuery(
+      pgp.helpers.insert(scoresToBeInserted, columnTemplate),
+      db.none,
+    );
+  } catch (e) {
+    console.error("Error when trying to insert scores...");
+    throw e;
   }
 }
 

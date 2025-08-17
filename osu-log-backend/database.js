@@ -1,4 +1,5 @@
 const pgp = require("pg-promise")();
+const err = require("./errors.js");
 
 const connection = {
   host: "localhost",
@@ -17,8 +18,8 @@ async function dbQuery(query, pgpFunction, args) {
     result = await pgpFunction(query, args);
     return result;
   } catch (e) {
-    console.error(e);
-    return "FAIL-DB";
+    console.error("Fail in db call:", e);
+    throw err.FAIL_DB;
   }
 }
 

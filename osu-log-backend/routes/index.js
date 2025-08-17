@@ -4,10 +4,8 @@ const { addScores, addScoresEndpoint } = require("../funtions/updateplays.js");
 const { getScoresForSession, getScoresForSessionEndpoint } = require(
   "../funtions/getScoresForSession.js",
 );
-const { generateStatsForSessionEndpoint } = require(
-  "../funtions/generateStats.js",
-);
 const router = express.Router();
+const err = require("../errors.js");
 
 /* GET home page. */
 router.get("/", function(_req, res, _next) {
@@ -20,32 +18,48 @@ router.get(
   "/get-scores-for-session/:userID/:sessionID",
   getScoresForSessionEndpoint,
 );
-router.get(
-  "/generate-stats/:userID/:sessionID",
-  generateStatsForSessionEndpoint,
-);
 router.get("/track/:username/", async (req, res) => {
   const username = req.params.username;
-  const token = await require("../funtions/token.js")();
-  if (!token) {
-    res.status(500).send("TOKEN-FAIL");
+
+  let token;
+  try {
+    token = await require("../funtions/token.js")();
+  } catch (e) {
+    console.log(e);
+    res.status(500).json(e);
   }
+
   const user = await userData(username, token);
   if (user === "FAIL-API") {
     res.status(500).send(user);
     return;
   }
-  const update = await addScores(user.id, token);
-  if (update !== "SUCSESS" && update !== "NONEW") {
-    console.log(update);
-    res.status(500).send(update);
+
+  try {
+    await addScores(user.id, token);
+  } catch (e) {
+    if (e !== err.NO_NEW) {
+      console.log(e);
+      res.status(500).json(e);
+      return;
+    }
+  }
+
+  let sessionScores;
+  try {
+    sessionScores = await getScoresForSession(user.id, "latest");
+  } catch (e) {
+    if (e === err.NO_SCORES) {
+      console.log(
+        "No scores for this user in the last 48 hours, and they have no scores saved...",
+      );
+      res.status(200).send(e.message);
+    } else {
+      res.status(500).send(e);
+    }
     return;
   }
-  const sessionScores = await getScoresForSession(user.id, "latest");
-  if (!sessionScores.scores) {
-    res.status(500).send(sessionScores);
-    return;
-  }
+
   res.status(200).send({
     userData: user,
     sessionScores,

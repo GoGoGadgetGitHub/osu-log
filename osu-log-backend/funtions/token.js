@@ -1,53 +1,51 @@
 const api = require("../osuAPITemplate.js");
-const pg = require("pg");
-const db = require("../database.js");
+const { db, dbQuery } = require("../database.js");
 
 async function getToken(res, req) {
+  console.log("Checking database token...");
 
-  const client = new pg.Client({ database: "TestDatabase" });
-  await client.connect()
-
-  console.log("Checking database token")
-
-  let tokenQuery;
+  let result;
   try {
-    tokenQuery = await client.query("select * from token_cache where token_name like 'osu_public_token'");
-  }
-  catch (e) {
-    console.error(e)
-    return null
+    result = await dbQuery(
+      "select * from token_cache where token_name like 'osu_public_token'",
+      db.one,
+    );
+  } catch (e) {
+    console.error("Error when trying to fetch token from db...");
+    throw e;
   }
 
-  let expiresAt = new Date(tokenQuery.rows[0].expires_at);
-  const token = tokenQuery.rows[0].token_string;
+  const { token_string: token, expires_at } = result;
 
-  if (Date.now() < expiresAt) {
+  if (Date.now() < expires_at) {
     console.log("Token is valid");
     return token;
   }
 
   console.log("Token is no longer valid, fetching a new one...");
-  const newToken = await getNewToken();
-
-  if (newToken === null) {
-    return null;
+  let expires_in, access_token;
+  try {
+    ({ expires_in, access_token } = await getNewToken());
+  } catch (e) {
+    throw e;
   }
 
-  expiresAt.setTime(Date.now() + (newToken.expires_in * 1000))
+  expires_at.setTime(Date.now() + (expires_in * 1000));
 
   console.log("Updating token...");
   try {
-    const tokenUpsert = await client.query(`UPDATE token_cache set token_string = '${newToken.access_token}', expires_at = '${expiresAt.toISOString()}'`)
-
+    await dbQuery(
+      `UPDATE token_cache set token_string = '${access_token}', expires_at = '${expires_at.toISOString()}'`,
+      db.none,
+    );
   } catch (e) {
-    console.error(e)
-    return null
+    console.error("Error when tryind to update osu! public token...");
+    throw e;
   }
-  console.log("Update Sucsessful!")
+  console.log("Update Sucsessful!");
 
-  return newToken.access_token;
+  return access_token;
 }
-
 
 async function getNewToken() {
   const url = "http://osu.ppy.sh/oauth/token";
@@ -74,8 +72,9 @@ async function getNewToken() {
     body: body,
   });
 
-  if (!response)
-    return
+  if (!response) {
+    return;
+  }
 
   return response;
 }

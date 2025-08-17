@@ -1,12 +1,4 @@
-const { getScoresForSession } = require("./getScoresForSession.js");
 const { db, dbQuery, pgp } = require("../database.js");
-
-async function generateStatsForSessionEndpoint(req, res) {
-  const osu_user_id = req.params.userID;
-  const sessionID = Number(req.params.sessionID);
-  await generateStatsForSession(sessionID, osu_user_id);
-  res.status(200);
-}
 
 async function insertOrUpdateStats(stat, osu_user_id, sessionID, sessionTime) {
   console.log(`Inserting stats for session ${sessionID}`);
@@ -39,22 +31,29 @@ async function insertOrUpdateStats(stat, osu_user_id, sessionID, sessionTime) {
   const query = insert +
     " on conflict (osu_user_id, session_id) do update set " + set;
 
-  const result = await dbQuery(query, db.none);
-  if (result === "FAIL-DB") {
-    return result;
+  try {
+    await dbQuery(query, db.none);
+  } catch (e) {
+    console.error(
+      `Error when inserting stats into db for session${sessionID}...`,
+    );
+    throw e;
   }
 }
 
 async function generateStatsForSession(sessionID, osu_user_id) {
   console.log(`Generating stats for session ${sessionID}`);
-  let numPlays = await dbQuery(
-    "select count(*) from scores where osu_user_id like '$1' and session_id=$2",
-    db.one,
-    [osu_user_id, sessionID],
-  );
 
-  if (numPlays === "FAIL_DB") {
-    return numPlays;
+  let numPlays;
+  try {
+    numPlays = await dbQuery(
+      "select count(*) from scores where osu_user_id like '$1' and session_id=$2",
+      db.one,
+      [osu_user_id, sessionID],
+    );
+  } catch (e) {
+    console.error("Error while trying to count the number of plays...");
+    throw e;
   }
 
   numPlays = Number(numPlays.count);
@@ -72,31 +71,51 @@ async function generateStatsForSession(sessionID, osu_user_id) {
 
   const plays = numPlays;
 
-  options.field = "performance->'perf'->>'pp'";
-  const avgPP = await getAverage(options);
-  const minMaxPP = await getMinMax(options);
+  let avgPP,
+    minMaxPP,
+    avgSr,
+    minMaxSr,
+    avgAcc,
+    minMaxAcc,
+    avgBpm,
+    minMaxBpm,
+    gradeCounts,
+    failsPasses,
+    sessionTime;
+  try {
+    options.field = "performance->'perf'->>'pp'";
+    avgPP = await getAverage(options);
+    minMaxPP = await getMinMax(options);
 
-  options.field = "performance->'attributes'->>'stars'";
-  const avgSr = await getAverage(options);
-  const minMaxSr = await getMinMax(options);
+    options.field = "performance->'attributes'->>'stars'";
+    avgSr = await getAverage(options);
+    minMaxSr = await getMinMax(options);
 
-  options.field = "score->>'accuracy'";
-  const avgAcc = await getAverage(options);
-  const minMaxAcc = await getMinMax(options);
+    options.field = "score->>'accuracy'";
+    avgAcc = await getAverage(options);
+    minMaxAcc = await getMinMax(options);
 
-  options.field = "score->'beatmap'->>'bpm'";
-  const avgBpm = await getAverage(options);
-  const minMaxBpm = await getMinMax(options);
+    options.field = "score->'beatmap'->>'bpm'";
+    avgBpm = await getAverage(options);
+    minMaxBpm = await getMinMax(options);
 
-  const gradeCounts = await countGrades({ sessionID, osu_user_id });
-
-  //TODO: add the rest of the db results
-  if (avgSr === "FAIL-DB" || avgAcc === "FAIL-DB" || avgPP === "FAIL-DB") {
-    return "FAIL-DB";
+    gradeCounts = await countGrades({ sessionID, osu_user_id });
+    failsPasses = await getCountFailsAndPasses(
+      sessionID,
+      osu_user_id,
+      numPlays,
+    );
+    sessionTime = await dbQuery(
+      "select set_at from scores where osu_user_id like '$1' and session_id = $2 order by set_at desc limit 1",
+      db.one,
+      [osu_user_id, sessionID],
+    );
+  } catch (e) {
+    throw e;
   }
 
   const stat = {
-    ...await getCountFailsAndPasses(sessionID, osu_user_id, numPlays),
+    ...failsPasses,
     plays,
     bpm: { avg: avgBpm, ...minMaxBpm },
     sr: { avg: avgSr, ...minMaxSr },
@@ -105,24 +124,22 @@ async function generateStatsForSession(sessionID, osu_user_id) {
     gradeCounts,
   };
 
-  const sessionTime = await dbQuery(
-    "select set_at from scores where osu_user_id like '$1' and session_id = $2 order by set_at desc limit 1",
-    db.one,
-    [osu_user_id, sessionID],
-  );
-  if (sessionTime === "FAIL-DB") {
-    return sessionTime;
+  try {
+    await insertOrUpdateStats(stat, osu_user_id, sessionID, sessionTime.set_at);
+  } catch (e) {
+    throw e;
   }
-
-  await insertOrUpdateStats(stat, osu_user_id, sessionID, sessionTime.set_at);
 }
 
 async function getAverage({ field, sessionID, osu_user_id }) {
   const query =
     `select avg((${field})::numeric) from scores where osu_user_id like '$1' and session_id = $2;`;
-  const result = await dbQuery(query, db.one, [osu_user_id, sessionID]);
-  if (result == "FAIL_DB") {
-    return result;
+  let result;
+  try {
+    result = await dbQuery(query, db.one, [osu_user_id, sessionID]);
+  } catch (e) {
+    console.error(`Error while getting average for ${field}`);
+    throw e;
   }
   return Number(result.avg);
 }
@@ -141,7 +158,13 @@ async function countGrades({ sessionID, osu_user_id }) {
 
   query += " from scores where osu_user_id like '$1' and session_id = $2;";
 
-  const result = await dbQuery(query, db.one, [osu_user_id, sessionID]);
+  let result;
+  try {
+    result = await dbQuery(query, db.one, [osu_user_id, sessionID]);
+  } catch (e) {
+    console.error("Error when counting grades for session...");
+    throw e;
+  }
   return result;
 }
 
@@ -150,32 +173,31 @@ async function getMinMax({ field, sessionID, osu_user_id }) {
 
   const minQuery = `min((${field})::numeric)`;
   const maxQuery = `max((${field})::numeric)`;
+  const from = "from scores where osu_user_id like '$1' and session_id = $2";
 
-  query =
-    `select ${minQuery} from scores where osu_user_id like '$1' and session_id = $2;`;
-  const min = await dbQuery(query, db.one, [osu_user_id, sessionID]);
-  if (min == "FAIL_DB") {
-    return min;
+  let min, max;
+  try {
+    query = `select ${minQuery} ${from}`;
+    min = await dbQuery(query, db.one, [osu_user_id, sessionID]);
+    query = `select ${maxQuery} ${from}`;
+    max = await dbQuery(query, db.one, [osu_user_id, sessionID]);
+  } catch (e) {
+    console.error(`Error when trying to get min and max for ${field}...`);
+    throw e;
   }
-
-  query =
-    `select ${maxQuery} from scores where osu_user_id like '$1' and session_id = $2;`;
-  const max = await dbQuery(query, db.one, [osu_user_id, sessionID]);
-  if (max == "FAIL_DB") {
-    return max;
-  }
-
   return { min: Number(min.min), max: Number(max.max) };
 }
 
 async function getCountFailsAndPasses(sessionID, osu_user_id, numberOfScores) {
   const query =
     "select count(*) from scores where (score ->> 'passed') = 'false' and session_id = $1 and osu_user_id like $2";
-  const fails = await dbQuery(query, db.one, [sessionID, `${osu_user_id}`]);
 
-  if (fails === "FAIL-DB") {
-    console.log("Failed to get number of fails form db...");
-    return { fails, passes: 0 };
+  let fails;
+  try {
+    fails = await dbQuery(query, db.one, [sessionID, `${osu_user_id}`]);
+  } catch (e) {
+    console.error("Error while trying to count fails and passes...");
+    throw e;
   }
 
   return {
@@ -184,4 +206,20 @@ async function getCountFailsAndPasses(sessionID, osu_user_id, numberOfScores) {
   };
 }
 
-module.exports = { generateStatsForSession, generateStatsForSessionEndpoint };
+async function getSessionStats(osu_user_id, sessionID) {
+  const query =
+    "select stat_obj from stats where osu_user_id like $1 and session_id = $2";
+  let result;
+  try {
+    result = await dbQuery(query, db.one, [
+      osu_user_id.toString(),
+      sessionID,
+    ]);
+  } catch (e) {
+    console.error(`Error getting stats for session ${sessionID}`);
+    throw e;
+  }
+  return { ...result.stat_obj };
+}
+
+module.exports = { generateStatsForSession, getSessionStats };

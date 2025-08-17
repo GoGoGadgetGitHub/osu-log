@@ -1,5 +1,6 @@
 const calc = require("rosu-pp-js");
 const { pgp, db, dbQuery } = require("../database.js");
+const err = require("../errors.js");
 
 async function calculatePerformanceForScores(scores) {
   const performanceForScore = [];
@@ -7,10 +8,13 @@ async function calculatePerformanceForScores(scores) {
 
   console.log("Starting performance calculations...");
 
-  const maps = await getMapsFromDatabase(scores);
-  const result = await addNewMaps(scores, maps);
-  if (result === "FAIL-DB") {
-    return result;
+  let maps;
+  try {
+    maps = await getMapsFromDatabase(scores);
+    await addNewMaps(scores, maps);
+  } catch (e) {
+    console.log("Error in map handeling...", e);
+    throw e;
   }
 
   for (const score of scores) {
@@ -53,15 +57,17 @@ async function calculatePerformanceForScores(scores) {
     performanceForScore.push({ perf, attributes });
   }
 
-  pushNewAttributes(newAttributes);
-  if (result === "FAIL-DB") {
-    return result;
+  try {
+    await pushNewAttributes(newAttributes);
+  } catch (e) {
+    console.error("Error when updating attributes...", e);
+    throw e;
   }
-
   return performanceForScore;
 }
 
-function pushNewAttributes(newAttributes) {
+async function pushNewAttributes(newAttributes) {
+  console.log("Updating attributes..");
   if (newAttributes.length > 0) {
     const { update, ColumnSet } = pgp.helpers;
     const columnTemplate = new ColumnSet([
@@ -72,13 +78,13 @@ function pushNewAttributes(newAttributes) {
       },
     ], { table: "maps" });
 
-    const result = dbQuery(
-      update(newAttributes, columnTemplate) + "WHERE v.id = t.id",
-      db.none,
-    );
-
-    if (result === "FAIL-DB") {
-      return result;
+    try {
+      await dbQuery(
+        update(newAttributes, columnTemplate) + "WHERE v.id = t.id",
+        db.none,
+      );
+    } catch (e) {
+      throw e;
     }
   }
 }
@@ -90,7 +96,14 @@ async function addNewMaps(scores, maps) {
 
   for (const score of scores) {
     if (!maps[score.beatmap.id] && !downloaded.includes(score.beatmap.id)) {
-      const bytes = await downloadMissingBeatmap(score.beatmap.id);
+      let bytes;
+      try {
+        bytes = await downloadMissingBeatmap(score.beatmap.id);
+      } catch (e) {
+        console.log(e);
+        continue;
+      }
+
       downloaded.push(score.beatmap.id);
 
       const mapObject = new calc.Beatmap(bytes);
@@ -119,15 +132,26 @@ async function addNewMaps(scores, maps) {
   ], { table: "maps" });
 
   console.log("Adding maps...");
-  result = await dbQuery(pgp.helpers.insert(newMaps, columnTemplate), db.none);
-  if (result === "FAIL-DB") {
-    return result;
+  try {
+    result = await dbQuery(
+      pgp.helpers.insert(newMaps, columnTemplate),
+      db.none,
+    );
+  } catch (e) {
+    console.log("Error in adding new maps to db...");
+    throw e;
   }
 }
 
 async function downloadMissingBeatmap(id) {
   console.log(`Downloading ${id}...`);
-  const res = await fetch(`https://osu.ppy.sh/osu/${id}`);
+  let res;
+  try {
+    res = await fetch(`https://osu.ppy.sh/osu/${id}`);
+  } catch (e) {
+    console.error(`Failed to download map ${id}...`, e);
+    throw (err.FAIL_API);
+  }
 
   let mapBytes = "";
   for await (const chunk of res.body) {
@@ -162,7 +186,7 @@ async function getMapsFromDatabase(scores) {
   }
 
   let query = "select * from maps where ";
-  let part;
+  let part = "";
 
   scores.forEach((score, index) => {
     if (index === ids.length - 1) {
@@ -173,9 +197,12 @@ async function getMapsFromDatabase(scores) {
     query += part;
   });
 
-  const rows = await dbQuery(query, db.query);
-  if (rows === "FAIL-DB") {
-    return rows;
+  let rows;
+  try {
+    rows = await dbQuery(query, db.query);
+  } catch (e) {
+    console.error("Error in fetching maps from db...");
+    throw e;
   }
 
   const mapData = {};
