@@ -115,8 +115,10 @@
         padding: 0.5rem;
         border-radius: var(--radius);
         display: flex;
-        flex-direction: row;
+        flex-direction: column;
         justify-content: space-evenly;
+        max-width: 90%;
+        margin: auto;
         gap: 1rem;
     }
     .grade,
@@ -168,6 +170,7 @@
         flex-direction: row;
         align-items: center;
         justify-content: space-evenly;
+        flex-wrap: wrap;
         gap: 1rem;
     }
     .grades {

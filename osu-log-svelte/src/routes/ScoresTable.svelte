@@ -11,7 +11,8 @@
 	import Star from "../svg/Star.svelte";
 	import { crossfade, draw, fade, slide } from "svelte/transition";
 	import Pagination from "./Pagination.svelte";
-	import Loader from "./Loader.svelte";
+	import LargeLoader from "./LargeLoader.svelte";
+	import SmallLoader from "./SmallLoader.svelte";
 
 	//TODO: add scores sort dropdown for mobile
 
@@ -79,7 +80,7 @@
 
 <div transition:slide class="datatable-container">
 	<table>
-		<thead class="datatable-header">
+		<thead transition:fade class="datatable-header">
 			<tr>
 				<th
 					onclick={() => {
@@ -125,7 +126,9 @@
 		<tbody>
 			{#each sessionScores.scores as { score, performance }}
 				{#await loadImage(score.beatmapset.covers.slimcover)}
-					<Loader />
+					<tr transition:fade style="position: relative;">
+						<SmallLoader />
+					</tr>
 				{:then}
 					<tr
 						in:fade

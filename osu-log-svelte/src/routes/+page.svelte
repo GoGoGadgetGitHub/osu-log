@@ -4,7 +4,7 @@
     import Pagination from "./Pagination.svelte";
     import ScoresTable from "./ScoresTable.svelte";
     import Star from "../svg/Star.svelte";
-    import Loader from "./Loader.svelte";
+    import LargeLoader from "./LargeLoader.svelte";
     import { slide } from "svelte/transition";
     import axios from "axios";
     import SessionSummary from "./SessionSummary.svelte";
@@ -74,7 +74,7 @@
 <div class="main">
     <Username callback={handelTrackClicked} {error} />
     {#if loading && !userData}
-        <Loader />
+        <LargeLoader />
     {:else if userData && !error}
         <Profile {userData} />
         <ScoresTable {sessionScores} {maxSessions} {changeSession} {loading} />
