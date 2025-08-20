@@ -1,6 +1,7 @@
 :root {
 	/* Special */
 	--background: #0D0D10;
+	--background-light: #22222a;
 	--background-rgba1: rgba(13, 13, 16, 1);
 	--background-rgba0: rgba(13, 13, 16, 0.6);
 	--foreground: #c2c2c3;
@@ -28,7 +29,7 @@
 	--radius: 15px;
 	--transition: 0.3s;
 	/* Find good ratios for this */
-	--scores-table-template: 0.5fr 2fr 1fr 1fr 1fr 1fr 1fr 1fr;
+	--scores-table-template: 1fr 2fr 1fr 1fr 1fr 1.5fr 1fr 1fr;
 }
 
 body {

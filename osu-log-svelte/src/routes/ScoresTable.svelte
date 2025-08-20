@@ -13,8 +13,22 @@
 	import Pagination from "./Pagination.svelte";
 	import LargeLoader from "./LargeLoader.svelte";
 	import SmallLoader from "./SmallLoader.svelte";
+	import SortingDropdown from "./SortingDropdown.svelte";
+	import SortingArrows from "./SortingArrows.svelte";
 
 	//TODO: add scores sort dropdown for mobile
+
+	const ASSC = -1;
+	const DESC = 1;
+	const NO_ORDER = 0;
+	let lastOrder = $state({
+		grade: NO_ORDER,
+		song: NO_ORDER,
+		sr: NO_ORDER,
+		acc: NO_ORDER,
+		pp: NO_ORDER,
+		set: NO_ORDER,
+	});
 
 	let { sessionScores, maxSessions, changeSession, loading } = $props();
 	let gradeIcons = { X, XH: Xh, S, SH: Sh, A, B, C, D, F };
@@ -30,6 +44,7 @@
 		return new Promise((resolve) => {
 			let img = new Image();
 			img.onload = resolve;
+			img.onerror = resolve;
 			img.src = src;
 		});
 	}
@@ -55,74 +70,102 @@
 		acc: (score) => score.score.accuracy,
 	};
 
-	let lastOrder = {
-		grade: 1,
-		song: 1,
-		sr: 1,
-		acc: 1,
-		pp: 1,
-		set: 1,
-	};
+	//The sorting state can be 0 (unsorted), 1 (accending), -1(decending)
 
 	function sortBy(criteria) {
+		let order;
+		switch (lastOrder[criteria]) {
+			case NO_ORDER:
+				console.log("Change to assc");
+				order = lastOrder[criteria] = ASSC;
+				break;
+			case ASSC:
+				console.log("Change to desc");
+				order = lastOrder[criteria] = DESC;
+				break;
+			case DESC:
+				order = ASSC;
+				lastOrder[criteria] = NO_ORDER;
+				criteria = "set";
+				break;
+		}
+
 		sessionScores.scores.sort((a, b) => {
 			a = scoreMap[criteria](a);
 			b = scoreMap[criteria](b);
 
 			if (typeof a === "string") {
-				return lastOrder[criteria] * a.localeCompare(b);
+				return order * a.localeCompare(b);
 			}
-			return lastOrder[criteria] * (a - b);
+			return order * (a - b);
 		});
-		lastOrder[criteria] = -lastOrder[criteria];
+
+		console.log(lastOrder);
 	}
+
+	const columns = [
+		{
+			display: "Grade",
+			sort: "grade",
+		},
+		{
+			display: "Song Name",
+			sort: "song",
+		},
+		{
+			display: "Mods",
+			sort: undefined,
+		},
+		{
+			display: "Star",
+			sort: "sr",
+		},
+		{
+			display: "Accuracy",
+			sort: "acc",
+		},
+		{
+			display: "Hits",
+			sort: undefined,
+		},
+		{
+			display: "PP",
+			sort: "pp",
+		},
+		{
+			display: "Set",
+			sort: "set",
+		},
+	];
 </script>
 
 <div transition:slide class="datatable-container">
+	<SortingDropdown />
+
 	<table>
 		<thead transition:fade class="datatable-header">
 			<tr>
-				<th
-					onclick={() => {
-						sortBy("grade");
-					}}>Grade</th
-				>
-
-				<th
-					onclick={() => {
-						sortBy("song");
-					}}>Song Name</th
-				>
-
-				<th>Mods</th>
-
-				<th
-					onclick={() => {
-						sortBy("sr");
-					}}><Star /></th
-				>
-
-				<th
-					onclick={() => {
-						sortBy("acc");
-					}}>Accuracy</th
-				>
-
-				<th>Hits</th>
-
-				<th
-					onclick={() => {
-						sortBy("pp");
-					}}>PP</th
-				>
-
-				<th
-					onclick={() => {
-						sortBy("set");
-					}}>Set</th
-				>
+				{#each columns as { display, sort }}
+					<th
+						onclick={sort
+							? () => {
+									sortBy(sort);
+								}
+							: undefined}
+					>
+						{#if display === "Star"}
+							<Star />
+						{:else}
+							{display}
+						{/if}
+						{#if sort}
+							<SortingArrows order={lastOrder[sort]} />
+						{/if}
+					</th>
+				{/each}
 			</tr>
 		</thead>
+
 		<tbody>
 			{#each sessionScores.scores as { score, performance }}
 				{#await loadImage(score.beatmapset.covers.slimcover)}

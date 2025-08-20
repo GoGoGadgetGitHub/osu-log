@@ -34,6 +34,13 @@ thead tr {
 	border-radius: 30px;
 }
 
+thead th {
+	display: flex;
+	gap: 0.5rem;
+	overflow: unset;
+	cursor: pointer;
+}
+
 th {
 	display: flex;
 	justify-content: center;

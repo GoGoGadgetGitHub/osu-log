@@ -121,45 +121,35 @@
         margin: auto;
         gap: 1rem;
     }
+
     .grade,
     .stat {
         display: flex;
         flex-direction: column;
         align-items: center;
     }
+
     .stat span:nth-child(1) {
         font-weight: bold;
     }
+
+    .grade span:nth-child(2),
     .stat span:nth-child(2) {
-        background: var(--foreground);
+        background: #22222a;
         width: 100%;
-        color: var(--background);
+        color: var(--foreground);
         text-align: center;
         border-radius: var(--radius);
     }
+
     :global(.grade span:nth-child(1) svg) {
         width: 3rem;
         margin: auto;
         padding: 0 1rem;
     }
+
     .grade span:nth-child(1) {
         width: 100%;
-    }
-    .grade span:nth-child(2) {
-        background: var(--foreground);
-        color: var(--background);
-        display: grid;
-        padding: 0.2rem;
-        width: 100%;
-        text-align: center;
-        font-weight: bold;
-    }
-    .grade:first-of-type span:nth-child(2) {
-        border-radius: var(--radius) 0 0 var(--radius);
-    }
-
-    .grade:last-of-type span:nth-child(2) {
-        border-radius: 0 var(--radius) var(--radius) 0;
     }
 
     .stat span {
@@ -173,15 +163,19 @@
         flex-wrap: wrap;
         gap: 1rem;
     }
+
     .grades {
         display: flex;
         justify-content: center;
+        gap: 1rem;
     }
+
     h2 {
         text-align: center;
         color: var(--foreground);
         margin: 0;
     }
+
     @media (max-width: 800px) {
         .session-summary {
             color: var(--foreground);
