@@ -70,8 +70,6 @@
 		acc: (score) => score.score.accuracy,
 	};
 
-	//The sorting state can be 0 (unsorted), 1 (accending), -1(decending)
-
 	function sortBy(criteria) {
 		let order;
 		switch (lastOrder[criteria]) {
@@ -99,8 +97,6 @@
 			}
 			return order * (a - b);
 		});
-
-		console.log(lastOrder);
 	}
 
 	const columns = [
@@ -231,6 +227,7 @@
 		</tbody>
 	</table>
 </div>
+
 <div class="table-below">
 	{#if maxSessions}
 		<Pagination {maxSessions} {changeSession} />
