@@ -21,17 +21,46 @@
 	const ASSC = -1;
 	const DESC = 1;
 	const NO_ORDER = 0;
+
 	let lastOrder = $state({
-		grade: NO_ORDER,
-		song: NO_ORDER,
-		sr: NO_ORDER,
-		acc: NO_ORDER,
-		pp: NO_ORDER,
-		set: NO_ORDER,
+		grade: { active: false, order: NO_ORDER },
+		song: { active: false, order: NO_ORDER },
+		sr: { active: false, order: NO_ORDER },
+		acc: { active: false, order: NO_ORDER },
+		pp: { active: false, order: NO_ORDER },
+		set: { active: false, order: NO_ORDER },
 	});
 
 	let { sessionScores, maxSessions, changeSession, loading } = $props();
 	let gradeIcons = { X, XH: Xh, S, SH: Sh, A, B, C, D, F };
+
+	let displayedScores = $derived.by(() => {
+		console.log("update");
+		let criteria;
+
+		Object.keys(lastOrder).forEach((key) => {
+			if (lastOrder[key].active) {
+				criteria = key;
+				return;
+			}
+		});
+
+		console.log(criteria);
+
+		if (!criteria || lastOrder[criteria].order === NO_ORDER) {
+			return sessionScores.scores;
+		}
+
+		return sessionScores.scores.toSorted((a, b) => {
+			a = scoreMap[criteria](a);
+			b = scoreMap[criteria](b);
+
+			if (typeof a === "string") {
+				return lastOrder[criteria].order * a.localeCompare(b);
+			}
+			return lastOrder[criteria].order * (a - b);
+		});
+	});
 
 	let dateFormatter = new Intl.DateTimeFormat("en-US", {
 		month: "short",
@@ -49,7 +78,6 @@
 		});
 	}
 
-	//NOTE: this is pretty slow
 	const scoreMap = {
 		sr: (score) => {
 			if (score.performance) return score.performance.attributes.stars;
@@ -71,32 +99,22 @@
 	};
 
 	function sortBy(criteria) {
-		let order;
-		switch (lastOrder[criteria]) {
-			case NO_ORDER:
-				console.log("Change to assc");
-				order = lastOrder[criteria] = ASSC;
-				break;
-			case ASSC:
-				console.log("Change to desc");
-				order = lastOrder[criteria] = DESC;
-				break;
-			case DESC:
-				order = ASSC;
-				lastOrder[criteria] = NO_ORDER;
-				criteria = "set";
-				break;
+		if (lastOrder[criteria].order === DESC) {
+			lastOrder[criteria].order = NO_ORDER;
+		} else if (lastOrder[criteria].order === ASSC) {
+			lastOrder[criteria].order = DESC;
+		} else {
+			lastOrder[criteria].order = ASSC;
 		}
 
-		sessionScores.scores.sort((a, b) => {
-			a = scoreMap[criteria](a);
-			b = scoreMap[criteria](b);
-
-			if (typeof a === "string") {
-				return order * a.localeCompare(b);
+		Object.keys(lastOrder).forEach((key) => {
+			lastOrder[key].active = false;
+			if (key !== criteria) {
+				lastOrder[key].order = NO_ORDER;
 			}
-			return order * (a - b);
 		});
+
+		lastOrder[criteria].active = true;
 	}
 
 	const columns = [
@@ -135,6 +153,8 @@
 	];
 </script>
 
+{$inspect(lastOrder)}
+
 <div transition:slide class="datatable-container">
 	<SortingDropdown />
 
@@ -163,7 +183,7 @@
 		</thead>
 
 		<tbody>
-			{#each sessionScores.scores as { score, performance }}
+			{#each displayedScores as { score, performance }}
 				{#await loadImage(score.beatmapset.covers.slimcover)}
 					<tr transition:fade style="position: relative;">
 						<SmallLoader />
@@ -234,7 +254,6 @@
 	{/if}
 	{#if sessionScores.scores}
 		<div>
-			{$inspect(sessionScores)}
 			{dateFormatter.format(new Date(sessionScores.meta.time.start))}
 			-
 			{dateFormatter.format(new Date(sessionScores.meta.time.end))}

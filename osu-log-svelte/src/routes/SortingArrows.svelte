@@ -8,7 +8,11 @@
     let { order } = $props();
 </script>
 
-<div class="arrows {orderResolution[`${order}`]}">
+<div
+    class="arrows {orderResolution[`${order.order}`]} {order.active
+        ? 'active'
+        : ''}"
+>
     <div class="up"></div>
     <div class="down"></div>
 </div>
@@ -44,6 +48,9 @@
     .arrows.desc .down {
         background: var(--background);
     }
+
+    .arrows:not(.active) .up,
+    .arrows:not(.active) .down,
     .arrows.no-order .up,
     .arrows.no-order .down {
         background: gray;
