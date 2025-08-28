@@ -165,7 +165,11 @@ async function countGrades({ sessionID, osu_user_id }) {
     console.error("Error when counting grades for session...");
     throw e;
   }
-  return result;
+  const gradeCounts = [];
+  Object.keys(result).forEach((key) => {
+    gradeCounts.push({ grade: key, count: result[key] });
+  });
+  return gradeCounts;
 }
 
 async function getMinMax({ field, sessionID, osu_user_id }) {
