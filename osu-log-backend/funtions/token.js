@@ -1,5 +1,5 @@
-const api = require("../osuAPITemplate.js");
 const { db, dbQuery } = require("../database.js");
+const { axios } = require("axios");
 
 async function getToken(res, req) {
   console.log("Checking database token...");
@@ -48,34 +48,18 @@ async function getToken(res, req) {
 }
 
 async function getNewToken() {
-  const url = "http://osu.ppy.sh/oauth/token";
-
-  const headers = {
-    "Accept": "application/json",
-    "Content-Type": "application/x-www-form-urlencoded",
-  };
-
-  const method = "POST";
-
-  const body = new URLSearchParams({
+  const response = await axios.post(`http://osu.ppy.sh/oauth/token`, {
     client_id: process.env.OSU_CLIENT_ID,
     client_secret: process.env.OSU_CLIENT_SECRET,
     grant_type: "client_credentials",
     scope: "public",
+  }, {
+    headers: {
+      "Accept": "application/json",
+      "Content-Type": "application/x-www-form-urlencoded",
+    },
   });
 
-  const response = await api({
-    url,
-    headers,
-    errorString: "Token Fetch Failed.",
-    method,
-    body: body,
-  });
-
-  if (!response) {
-    return;
-  }
-
-  return response;
+  console.log(response);
 }
 module.exports = getToken;

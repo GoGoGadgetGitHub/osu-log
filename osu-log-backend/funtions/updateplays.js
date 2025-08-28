@@ -1,5 +1,5 @@
 const { db, pgp, dbQuery } = require("../database.js");
-const api = require("../osuAPITemplate.js");
+const api = require("../osuAPI.js");
 const { calculatePerformanceForScores } = require("./calculator.js");
 const { generateStatsForSession } = require(
   "./generateStats.js",
@@ -209,44 +209,34 @@ function calculateBpm(score) {
   }
 }
 
-//TODO: Stop using this it's not really usefull use axios
 async function recentPlays(osuUserID, token) {
   if (!token) {
     console.log("fetching token for recent plays");
-    token = await require("./token.js")();
+    try {
+      token = await require("./token.js")();
+    } catch (e) {
+      console.log(e.message);
+      throw err.FAIL_API;
+    }
   }
 
-  const method = "GET";
-
-  const url = new URL(
-    `https://osu.ppy.sh/api/v2/users/${osuUserID}/scores/recent`,
-  );
-
-  const params = {
-    "include_fails": "1",
-    "limit": "999",
-  };
-
-  const headers = {
-    "Content-Type": "application/json",
-    "Accept": "application/json",
-    "Authorization": `Bearer ${token}`,
-    "x-api-version": "20220705",
-  };
-
-  const response = await api({
-    url,
-    headers,
-    errorString: "Recent Scores Fetch Failed.",
-    method,
-    params,
-  });
-
-  if (!response) {
-    return;
+  let response;
+  try {
+    response = await api.get(`/users/${osuUserID}/scores/recent`, {
+      params: {
+        include_fails: "1",
+        limit: "999",
+      },
+      headers: {
+        "Authorization": `Bearer ${token}`,
+      },
+    });
+  } catch (e) {
+    console.log(e.message);
+    throw err.FAIL_API;
   }
 
-  return response;
+  return response.data;
 }
 
 module.exports.addScores = addScores;

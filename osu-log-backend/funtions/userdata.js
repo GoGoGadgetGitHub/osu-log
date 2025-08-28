@@ -1,4 +1,5 @@
-const api = require("../osuAPITemplate.js");
+const err = require("../errors.js");
+const api = require("../osuAPI.js");
 
 async function getUserDataEndpoint(req, res) {
   const username = req.params.username;
@@ -14,6 +15,7 @@ async function getUserDataEndpoint(req, res) {
 
 async function getUserData(username, token) {
   console.log(`Getting userdata for ${username}...`);
+
   if (!token) {
     console.log("fetching token for user data");
     try {
@@ -24,30 +26,22 @@ async function getUserData(username, token) {
     }
   }
 
-  const url = new URL(`https://osu.ppy.sh/api/v2/users/${username}`);
-  const params = {
-    "key": username,
-  };
-  const headers = {
-    "Content-Type": "application/json",
-    "Accept": "application/json",
-    "Authorization": `Bearer ${token}`,
-  };
-  const method = "GET";
-
-  const userDataResponse = await api({
-    url,
-    method,
-    headers,
-    errorString: "Get userdata error",
-    params,
-  });
-
-  if (!userDataResponse) {
-    return "FAIL-API";
+  let response;
+  try {
+    response = await api.get(`/users/${username}`, {
+      params: {
+        key: username,
+      },
+      headers: {
+        "Authorization": `Bearer ${token}`,
+      },
+    });
+  } catch (e) {
+    console.log(e.message);
+    throw err.FAIL_API;
   }
 
-  return userDataResponse;
+  return response.data;
 }
 
 module.exports.userData = getUserData;
