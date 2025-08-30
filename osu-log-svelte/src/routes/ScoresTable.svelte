@@ -193,6 +193,7 @@
 						in:fade
 						style="background: center / contain no-repeat linear-gradient(to right, var(--background-rgba0), var(--background-rgba1) 95%), url({score
 							.beatmapset.covers.slimcover})"
+						id={`score-${score.id}`}
 					>
 						<th class="grade-icon">
 							<div class="icon-wrapper">

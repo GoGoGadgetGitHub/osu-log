@@ -80,7 +80,6 @@
         <Profile {userData} />
         <ScoresTable {sessionScores} {maxSessions} {changeSession} {loading} />
         <SessionSummary {sessionScores} />
-        <LineChartOverTime {sessionScores} type="sr" />
         <LineChartOverTime {sessionScores} type="pp" />
     {/if}
 </div>

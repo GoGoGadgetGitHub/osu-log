@@ -2,17 +2,36 @@
     import Chart from "chart.js/auto";
     import { onMount } from "svelte";
     import "chartjs-adapter-date-fns";
+    import { linear } from "svelte/easing";
 
     let { sessionScores, type } = $props();
     let lineChart;
 
-    let graphData = $derived.by(() => {
+    let starsTime = $derived.by(() => {
         const scores = sessionScores.scores;
+        const rows = document.querySelector(
+            ".datatable-container tbody",
+        ).children;
         return scores.map((score) => {
+            console.log(rows);
             return {
                 x: new Date(scoreMap["set"](score)).toISOString(),
-                y: scoreMap[type](score),
-                ref: score,
+                y: scoreMap["sr"](score),
+                meta: { name: scoreMap["song"](score), id: score.score.id },
+            };
+        });
+    });
+
+    let ppTime = $derived.by(() => {
+        const scores = sessionScores.scores;
+        const rows = document.querySelector(
+            ".datatable-container tbody",
+        ).children;
+        return scores.map((score, index) => {
+            return {
+                x: new Date(scoreMap["set"](score)).toISOString(),
+                y: scoreMap["pp"](score),
+                meta: { name: scoreMap["song"](score), id: score.score.id },
             };
         });
     });
@@ -44,39 +63,50 @@
             { intersect: true },
             true,
         );
-        const index = points[0].index;
-        const rows = document.querySelector(
-            ".datatable-container tbody",
-        ).children;
-        rows[index].scrollIntoView({
+        const id = points[0].element.$context.raw.meta.id;
+        const tableItem = document.querySelector(`#score-${id}`);
+        tableItem.scrollIntoView({
             behavior: "smooth",
             block: "center",
             inline: "nearest",
         });
         await new Promise((resolve) => setTimeout(resolve, 500));
-        rows[index].style.boxShadow = "2px 2px 10px var(--hover)";
+        tableItem.style.boxShadow = "2px 2px 10px var(--hover)";
         await new Promise((resolve) => setTimeout(resolve, 200));
-        rows[index].style.boxShadow = "unset";
+        tableItem.style.boxShadow = "unset";
     }
 
     function chart(node, graphData) {
         function setupChart(_graphData) {
+            const tooltip = {
+                callbacks: {
+                    label: (node) => {
+                        return node.raw.meta.name;
+                    },
+                },
+            };
+
+            const [timeStars, timePP] = _graphData;
+            console.log(timePP, timeStars);
+
+            const datasetPP = {
+                label: "PP",
+                data: timePP,
+                tooltip,
+                yAxisID: "y1",
+            };
+
+            const datasetSR = {
+                label: "Star Rating",
+                data: timeStars,
+                tooltip,
+                yAxisID: "y",
+            };
+
             lineChart = new Chart(node, {
                 type: "line",
                 data: {
-                    datasets: [
-                        {
-                            label: type === "sr" ? "Star Rating" : "PP",
-                            data: _graphData,
-                            tooltip: {
-                                callbacks: {
-                                    label: (node) => {
-                                        return scoreMap["song"](node.raw.ref);
-                                    },
-                                },
-                            },
-                        },
-                    ],
+                    datasets: [{ ...datasetPP }, { ...datasetSR }],
                 },
                 options: {
                     scales: {
@@ -85,6 +115,16 @@
                             time: {
                                 tooltipFormat: "yyyy-MM-dd HH:mm",
                             },
+                        },
+                        y: {
+                            type: "linear",
+                            display: true,
+                            position: "left",
+                        },
+                        y1: {
+                            type: "linear",
+                            display: true,
+                            position: "right",
                         },
                     },
                 },
@@ -104,8 +144,6 @@
     }
 </script>
 
-{$inspect(graphData)}
-
 <div>
-    <canvas id="lineChart" use:chart={graphData}></canvas>
+    <canvas id="lineChart" use:chart={[starsTime, ppTime]}></canvas>
 </div>
