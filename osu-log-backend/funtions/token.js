@@ -1,5 +1,5 @@
 const { db, dbQuery } = require("../database.js");
-const { axios } = require("axios");
+const { default: axios } = require("axios");
 
 async function getToken(res, req) {
   console.log("Checking database token...");
@@ -60,6 +60,6 @@ async function getNewToken() {
     },
   });
 
-  console.log(response);
+  return response.data;
 }
 module.exports = getToken;
