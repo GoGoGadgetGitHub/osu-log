@@ -8,7 +8,7 @@
     import { slide } from "svelte/transition";
     import axios from "axios";
     import SessionSummary from "./SessionSummary.svelte";
-    import LineChart from "./LineChart.svelte";
+    import LineChartOverTime from "./LineChartOverTime.svelte";
 
     let loading = $state(false);
     let sessionID = $state(0);
@@ -80,7 +80,8 @@
         <Profile {userData} />
         <ScoresTable {sessionScores} {maxSessions} {changeSession} {loading} />
         <SessionSummary {sessionScores} />
-        <LineChart {sessionScores} stat="Accuracy" />
+        <LineChartOverTime {sessionScores} type="sr" />
+        <LineChartOverTime {sessionScores} type="pp" />
     {/if}
 </div>
 

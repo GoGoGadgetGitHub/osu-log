@@ -35,7 +35,6 @@
     let { duration } = $derived(sessionScores.meta.time);
 </script>
 
-<!--TODO: Make these loops!-->
 <h2>Session Summary</h2>
 <div class="session-summary">
     <div class="stats">
