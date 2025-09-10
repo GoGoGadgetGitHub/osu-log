@@ -4,16 +4,12 @@
     import "chartjs-adapter-date-fns";
     import { linear } from "svelte/easing";
 
-    let { sessionScores, type } = $props();
+    let { sessionScores } = $props();
     let lineChart;
 
     let starsTime = $derived.by(() => {
         const scores = sessionScores.scores;
-        const rows = document.querySelector(
-            ".datatable-container tbody",
-        ).children;
         return scores.map((score) => {
-            console.log(rows);
             return {
                 x: new Date(scoreMap["set"](score)).toISOString(),
                 y: scoreMap["sr"](score),
