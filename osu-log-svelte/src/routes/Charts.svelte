@@ -1,27 +1,41 @@
 <script>
+    import { each } from "chart.js/helpers";
     import FarLeft from "../svg/FarLeft.svelte";
     import FarRight from "../svg/FarRight.svelte";
     import BarChart from "./BarChart.svelte";
     import LineChartOverTime from "./LineChartOverTime.svelte";
     let { sessionScores } = $props();
+
+    let activeTab = $state("ppsr");
+
+    const tabMap = [
+        { name: "ppsr", title: "PP SR", component: LineChartOverTime },
+        { name: "srspread", title: "Star Rating Spread", component: BarChart },
+    ];
 </script>
 
 <div>
     <div class="charts-tabs-container">
-        <div class="tab">
-            <span> Line </span>
-        </div>
-        <div class="tab active">
-            <span> Bar </span>
-        </div>
+        {#each tabMap as { title, name }}
+            <a
+                href="#chart"
+                onclick={() => {
+                    activeTab = name;
+                }}
+                class="tab {name === activeTab ? 'active' : ''}"
+            >
+                <span> {title} </span>
+            </a>
+        {/each}
     </div>
+
     <div class="charts-container">
-        <div class="line">
-            <LineChartOverTime {sessionScores} />
-        </div>
-        <div class="bar">
-            <BarChart {sessionScores} />
-        </div>
+        {#each tabMap as { name, component }}
+            {@const TheChart = component}
+            {#if activeTab === name}
+                <div id="chart"><TheChart {sessionScores} /></div>
+            {/if}
+        {/each}
     </div>
 </div>
 
@@ -35,15 +49,6 @@
         border-radius: 0 var(--radius) var(--radius) var(--radius);
         box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.2);
         z-index: 1;
-    }
-    .line {
-        grid-row: 1;
-        grid-column: 1;
-        visibility: hidden;
-    }
-    .bar {
-        grid-row: 1;
-        grid-column: 1;
     }
     .charts-tabs-container {
         display: flex;
@@ -60,7 +65,7 @@
         color: var(--foreground);
     }
     .tab.active {
-        z-index: 2;
+        z-index: 1;
         opacity: 1;
     }
 </style>
