@@ -1,4 +1,5 @@
 <script>
+    //TODO: Have a look at user tags
     import { each } from "chart.js/helpers";
     import FarLeft from "../svg/FarLeft.svelte";
     import FarRight from "../svg/FarRight.svelte";
@@ -6,11 +7,11 @@
     import LineChartOverTime from "./LineChartOverTime.svelte";
     let { sessionScores } = $props();
 
-    let activeTab = $state("ppsr");
+    let activeTab = $state("time");
 
     const tabMap = [
-        { name: "ppsr", title: "PP SR", component: LineChartOverTime },
-        { name: "srspread", title: "Star Rating Spread", component: BarChart },
+        { name: "time", title: "Time", component: LineChartOverTime },
+        { name: "spread", title: "Spread", component: BarChart },
     ];
 </script>
 

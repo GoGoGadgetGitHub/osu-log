@@ -5,31 +5,38 @@
     import { linear } from "svelte/easing";
 
     let { sessionScores } = $props();
-    let lineChart;
+    let lineChart = $state({});
 
     let starsTime = $derived.by(() => {
         const scores = sessionScores.scores;
-        return scores.map((score) => {
+        const data = scores.map((score) => {
             return {
                 x: new Date(scoreMap["set"](score)).toISOString(),
                 y: scoreMap["sr"](score),
                 meta: { name: scoreMap["song"](score), id: score.score.id },
             };
         });
+        return {
+            data,
+            label: "Star Rating",
+            yAxisID: "y",
+        };
     });
 
     let ppTime = $derived.by(() => {
         const scores = sessionScores.scores;
-        const rows = document.querySelector(
-            ".datatable-container tbody",
-        ).children;
-        return scores.map((score, index) => {
+        const data = scores.map((score) => {
             return {
                 x: new Date(scoreMap["set"](score)).toISOString(),
                 y: scoreMap["pp"](score),
                 meta: { name: scoreMap["song"](score), id: score.score.id },
             };
         });
+        return {
+            data,
+            label: "PP",
+            yAxisID: "y1",
+        };
     });
 
     const scoreMap = {
@@ -38,7 +45,6 @@
             else return score.score.beatmap.difficulty_rating;
         },
         song: (score) => score.score.beatmapset.title,
-        grade: (score) => (score.score.passed ? score.score.rank : "F"),
         pp: (score) => {
             if (score.score.pp) {
                 return score.score.pp;
@@ -49,7 +55,6 @@
             return 0;
         },
         set: (score) => score.score.ended_at,
-        acc: (score) => score.score.accuracy,
     };
 
     async function focusScore(click) {
@@ -83,26 +88,20 @@
             };
 
             const [timeStars, timePP] = _graphData;
-            console.log(timePP, timeStars);
+            const datasets = [
+                { ...timePP, tooltip },
+                { ...timeStars, tooltip },
+            ];
 
-            const datasetPP = {
-                label: "PP",
-                data: timePP,
-                tooltip,
-                yAxisID: "y1",
-            };
-
-            const datasetSR = {
-                label: "Star Rating",
-                data: timeStars,
-                tooltip,
-                yAxisID: "y",
-            };
+            console.log(datasets);
 
             lineChart = new Chart(node, {
                 type: "line",
                 data: {
-                    datasets: [{ ...datasetPP }, { ...datasetSR }],
+                    datasets: [
+                        { ...timePP, tooltip },
+                        { ...timeStars, tooltip },
+                    ],
                 },
                 options: {
                     scales: {
@@ -140,6 +139,20 @@
     }
 </script>
 
+{$inspect(starsTime)}
+
 <div>
+    <a
+        id="button"
+        href="#button"
+        onclick={() => {
+            console.log("clicked");
+            starsTime["hidden"] = true;
+            console.log(starsTime);
+        }}
+    >
+        click me
+    </a>
+
     <canvas id="lineChart" use:chart={[starsTime, ppTime]}></canvas>
 </div>
