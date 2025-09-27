@@ -35,7 +35,6 @@
 	let gradeIcons = { X, XH: Xh, S, SH: Sh, A, B, C, D, F };
 
 	let displayedScores = $derived.by(() => {
-		console.log("update");
 		let criteria;
 
 		Object.keys(lastOrder).forEach((key) => {
@@ -44,8 +43,6 @@
 				return;
 			}
 		});
-
-		console.log(criteria);
 
 		if (!criteria || lastOrder[criteria].order === NO_ORDER) {
 			return sessionScores.scores;
@@ -152,8 +149,6 @@
 		},
 	];
 </script>
-
-{$inspect(lastOrder)}
 
 <div transition:slide class="datatable-container">
 	<SortingDropdown />

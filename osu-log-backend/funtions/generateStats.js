@@ -81,7 +81,11 @@ async function generateStatsForSession(sessionID, osu_user_id) {
     minMaxBpm,
     gradeCounts,
     failsPasses,
-    sessionTime;
+    sessionTime,
+    avgOD,
+    minMaxOD,
+    avgAR,
+    minMaxAR;
   try {
     options.field = "performance->'perf'->>'pp'";
     avgPP = await getAverage(options);
@@ -94,6 +98,14 @@ async function generateStatsForSession(sessionID, osu_user_id) {
     options.field = "score->>'accuracy'";
     avgAcc = await getAverage(options);
     minMaxAcc = await getMinMax(options);
+
+    options.field = "performance->'attributes'->>'greatHitWindow'";
+    avgOD = await getAverage(options);
+    minMaxOD = await getMinMax(options);
+
+    options.field = "performance->'attributes'->>'ar'";
+    avgAR = await getAverage(options);
+    minMaxAR = await getMinMax(options);
 
     options.field = "score->'beatmap'->>'bpm'";
     avgBpm = await getAverage(options);
@@ -121,6 +133,8 @@ async function generateStatsForSession(sessionID, osu_user_id) {
     sr: { avg: avgSr, ...minMaxSr },
     pp: { avg: avgPP, ...minMaxPP },
     acc: { avg: avgAcc, ...minMaxAcc },
+    od: { avg: toOD(avgOD), min: toOD(minMaxOD.min), max: toOD(minMaxOD.max) },
+    ar: { avg: avgAR, ...minMaxAR },
     gradeCounts,
   };
 
@@ -129,6 +143,10 @@ async function generateStatsForSession(sessionID, osu_user_id) {
   } catch (e) {
     throw e;
   }
+}
+
+function toOD(hitwindow) {
+  return (hitwindow - 80) / -6;
 }
 
 async function getAverage({ field, sessionID, osu_user_id }) {

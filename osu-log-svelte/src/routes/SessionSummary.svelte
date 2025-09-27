@@ -56,7 +56,6 @@
     <div class="grades">
         {#each grades as { grade, count }}
             {#if count > 0}
-                {$inspect(gradeIcons[grade.toUpperCase()])}
                 <span class="grade">
                     <span>
                         <svelte:component

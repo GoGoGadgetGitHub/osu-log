@@ -5,7 +5,7 @@
     import { linear } from "svelte/easing";
 
     let { sessionScores } = $props();
-    let lineChart = $state({});
+    let lineChart;
 
     let starsTime = $derived.by(() => {
         const scores = sessionScores.scores;
@@ -77,82 +77,57 @@
         tableItem.style.boxShadow = "unset";
     }
 
-    function chart(node, graphData) {
-        function setupChart(_graphData) {
-            const tooltip = {
-                callbacks: {
-                    label: (node) => {
-                        return node.raw.meta.name;
-                    },
+    function setupChart(node) {
+        const tooltip = {
+            callbacks: {
+                label: (node) => {
+                    return node.raw.meta.name;
                 },
-            };
+            },
+        };
 
-            const [timeStars, timePP] = _graphData;
-            const datasets = [
-                { ...timePP, tooltip },
-                { ...timeStars, tooltip },
-            ];
+        const datasets = [
+            { ...starsTime, tooltip },
+            { ...ppTime, tooltip },
+        ];
 
-            console.log(datasets);
-
-            lineChart = new Chart(node, {
-                type: "line",
-                data: {
-                    datasets: [
-                        { ...timePP, tooltip },
-                        { ...timeStars, tooltip },
-                    ],
-                },
-                options: {
-                    scales: {
-                        x: {
-                            type: "time",
-                            time: {
-                                tooltipFormat: "yyyy-MM-dd HH:mm",
-                            },
-                        },
-                        y: {
-                            type: "linear",
-                            display: true,
-                            position: "left",
-                        },
-                        y1: {
-                            type: "linear",
-                            display: true,
-                            position: "right",
+        lineChart = new Chart(node, {
+            type: "line",
+            data: {
+                datasets,
+            },
+            options: {
+                scales: {
+                    x: {
+                        type: "time",
+                        time: {
+                            tooltipFormat: "yyyy-MM-dd HH:mm",
                         },
                     },
+                    y: {
+                        type: "linear",
+                        display: true,
+                        position: "left",
+                    },
+                    y1: {
+                        type: "linear",
+                        display: true,
+                        position: "right",
+                    },
                 },
-            });
-        }
-        setupChart(graphData);
+            },
+        });
+    }
+
+    function chart(node) {
+        setupChart(node);
         lineChart.canvas.addEventListener("click", focusScore);
-        return {
-            update(graphData) {
-                lineChart.destroy();
-                setupChart(graphData);
-            },
-            destroy() {
-                lineChart.destroy();
-            },
+        return () => {
+            lineChart.destroy();
         };
     }
 </script>
 
-{$inspect(starsTime)}
-
 <div>
-    <a
-        id="button"
-        href="#button"
-        onclick={() => {
-            console.log("clicked");
-            starsTime["hidden"] = true;
-            console.log(starsTime);
-        }}
-    >
-        click me
-    </a>
-
-    <canvas id="lineChart" use:chart={[starsTime, ppTime]}></canvas>
+    <canvas id="lineChart" {@attach chart}></canvas>
 </div>

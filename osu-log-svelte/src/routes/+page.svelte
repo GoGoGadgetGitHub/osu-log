@@ -71,8 +71,6 @@
     }
 </script>
 
-{$inspect(maxSessions)}
-
 <div class="main">
     <Username callback={handelTrackClicked} {error} />
     {#if loading && !userData}
