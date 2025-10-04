@@ -133,7 +133,7 @@ async function generateStatsForSession(sessionID, osu_user_id) {
     sr: { avg: avgSr, ...minMaxSr },
     pp: { avg: avgPP, ...minMaxPP },
     acc: { avg: avgAcc, ...minMaxAcc },
-    od: { avg: toOD(avgOD), min: toOD(minMaxOD.min), max: toOD(minMaxOD.max) },
+    od: { avg: toOD(avgOD), min: toOD(minMaxOD.max), max: toOD(minMaxOD.min) },
     ar: { avg: avgAR, ...minMaxAR },
     gradeCounts,
   };
@@ -185,7 +185,7 @@ async function countGrades({ sessionID, osu_user_id }) {
   }
   const gradeCounts = [];
   Object.keys(result).forEach((key) => {
-    gradeCounts.push({ grade: key, count: result[key] });
+    gradeCounts.push({ grade: key, count: Number(result[key]) });
   });
   return gradeCounts;
 }

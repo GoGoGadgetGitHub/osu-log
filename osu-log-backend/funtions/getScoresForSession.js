@@ -27,9 +27,10 @@ async function getScoresForSession(osu_user_id, sessionID) {
   const start = scores[0].score.ended_at;
   const end = scores[scores.length - 1].score.ended_at;
 
-  const diffrence = new Date(new Date(end) - new Date(start));
-  const duration =
-    `${diffrence.getHours()} hours ${diffrence.getMinutes()} minutes`;
+  const difference = new Date(end) - new Date(start);
+  const hours = Math.floor(difference / (1000 * 60 * 60));
+  const minutes = Math.floor((difference / (1000 * 60)) % 60);
+  const duration = `${hours} hours ${minutes} minutes`;
 
   let sessionStats;
   try {
@@ -60,6 +61,7 @@ async function getScoresForSessionEndpoint(req, res) {
     sessionScores = await getScoresForSession(osu_user_id, sessionID);
   } catch (e) {
     res.status(500).json(e);
+    return;
   }
 
   res.status(200).json(sessionScores);

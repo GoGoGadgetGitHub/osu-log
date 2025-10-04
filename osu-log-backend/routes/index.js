@@ -4,6 +4,9 @@ const { addScores, addScoresEndpoint } = require("../funtions/updateplays.js");
 const { getScoresForSession, getScoresForSessionEndpoint } = require(
   "../funtions/getScoresForSession.js",
 );
+const { getCombinedSessionEndPoint } = require(
+  "../funtions/getCombinedSession.js",
+);
 const router = express.Router();
 const err = require("../errors.js");
 
@@ -13,6 +16,10 @@ router.get("/", function(_req, res, _next) {
 });
 
 router.get("/get-user-data/:username", userDataEndpoint);
+router.get(
+  "/get-combined-session/:userID/",
+  getCombinedSessionEndPoint,
+);
 router.get("/update-scores-for-user/:userID", addScoresEndpoint);
 router.get(
   "/get-scores-for-session/:userID/:sessionID",

@@ -50,6 +50,20 @@
         sessionID = sessionScores.meta.id;
     }
 
+    async function testMultiSession() {
+        let session;
+        try {
+            session = await axios.get(
+                `http://localhost:3000/get-combined-session/11628790/?id=0&id=1`,
+            );
+        } catch (e) {
+            console.log(e);
+            return;
+        } finally {
+            console.log(session.data);
+        }
+    }
+
     async function changeSession(id) {
         sessionID = id;
         let session;
@@ -72,6 +86,7 @@
 </script>
 
 <div class="main">
+    <a href onclick={testMultiSession}>Test</a>
     <Username callback={handelTrackClicked} {error} />
     {#if loading && !userData}
         <LargeLoader />
