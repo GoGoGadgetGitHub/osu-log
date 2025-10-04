@@ -85,7 +85,7 @@
 
 <style>
     .main {
-        width: 80%;
+        max-width: 1000px;
         margin: auto;
         display: grid;
         row-gap: 1rem;

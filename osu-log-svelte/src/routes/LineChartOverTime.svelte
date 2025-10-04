@@ -128,6 +128,12 @@
     }
 </script>
 
-<div>
+<div class="chart-container">
     <canvas id="lineChart" {@attach chart}></canvas>
 </div>
+
+<style>
+    .chart-container {
+        min-height: 30rem;
+    }
+</style>
