@@ -60,9 +60,8 @@ function mergeSession(session, combined) {
 
     if (key === "gradeCounts") {
       combinedStats.gradeCounts.forEach((gradeCount, index) => {
-        //TODO: remove number conversion here, it's temporary
-        gradeCount.count = Number(gradeCount.count) +
-          Number(sessionStats.gradeCounts[index].count);
+        gradeCount.count += gradeCount.count +
+          sessionStats.gradeCounts[index].count;
       });
     }
   }

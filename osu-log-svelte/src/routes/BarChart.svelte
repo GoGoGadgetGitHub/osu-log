@@ -39,8 +39,8 @@
                 x1: {
                     labels: getLabels(
                         "OD",
-                        sessionScores.meta.stats.od.max,
                         sessionScores.meta.stats.od.min,
+                        sessionScores.meta.stats.od.max,
                     ),
                 },
             },
