@@ -1,0 +1,14 @@
+Graphs:
+	Add Controls for toggeling regression and scatter for a stat
+	Add BPM
+	Add Acc
+
+Table:
+	Add pagination
+
+Session Summary:
+	Fix Play time
+
+Add more stats to profile component use bathbot as refrence
+
+Figure out auto refresh logic for users

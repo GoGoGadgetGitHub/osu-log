@@ -44,7 +44,7 @@ async function calculatePerformanceForScores(scores) {
       sliderEndHits: stats.slider_tail_hit,
     };
 
-    //I'm calculating the performance attributes for failed scores based off the beatmap object here because ther seems to be a massive
+    //I'm calculating the performance attributes for failed scores based off the beatmap object here because there seems to be a massive
     //diffrence in the difficulty attributes based on the amount of passed objects.
     //The saved attributes are all calculated on the entire map, so using that for failed scores does not seem to work.
     //There might be somthing i'm missing...
@@ -90,9 +90,13 @@ async function pushNewAttributes(newAttributes) {
 }
 
 async function addNewMaps(scores, maps) {
+  //TODO: use a set for downloaded maps instead of an array
+  //First gather all maps from a set of scores O(n)
+  //Then test !maps[score.beatmap.id] O(1)
+  //Then download the missing beatmap (async O(n))
   console.log("Checking for missing beatmaps..");
   const newMaps = [];
-  downloaded = [];
+  const downloaded = [];
 
   for (const score of scores) {
     if (!maps[score.beatmap.id] && !downloaded.includes(score.beatmap.id)) {
@@ -162,6 +166,7 @@ async function downloadMissingBeatmap(id) {
 }
 
 function parseMods(mods) {
+  //TODO: I need to account for NC = DT here
   let modCombo = "";
   let modHasSettings = false;
   let lazer = true;
@@ -179,11 +184,11 @@ function parseMods(mods) {
 }
 
 async function getMapsFromDatabase(scores) {
-  const ids = scores.map((score) => score.beatmap.id);
-
   if (scores.length === 0) {
     return;
   }
+
+  const ids = scores.map((score) => score.beatmap.id);
 
   let query = "select * from maps where ";
   let part = "";

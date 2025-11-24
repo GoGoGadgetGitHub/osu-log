@@ -7,6 +7,9 @@ const { getScoresForSession, getScoresForSessionEndpoint } = require(
 const { getCombinedSessionEndPoint } = require(
   "../funtions/getCombinedSession.js",
 );
+const { getSessions, getSessionsEndpoint } = require(
+  "../funtions/getSessions.js",
+);
 const router = express.Router();
 const err = require("../errors.js");
 
@@ -15,16 +18,31 @@ router.get("/", function(_req, res, _next) {
   res.render("index", { title: "Express" });
 });
 
-router.get("/get-user-data/:username", userDataEndpoint);
 router.get(
-  "/get-combined-session/:userID/",
+  "/get-user-data/:username",
+  userDataEndpoint,
+);
+
+router.get(
+  "/get-combined-session/:userID",
   getCombinedSessionEndPoint,
 );
-router.get("/update-scores-for-user/:userID", addScoresEndpoint);
+
+router.get(
+  "/update-scores-for-user/:userID",
+  addScoresEndpoint,
+);
+
 router.get(
   "/get-scores-for-session/:userID/:sessionID",
   getScoresForSessionEndpoint,
 );
+
+router.get(
+  "/get-sessions/:userID/",
+  getSessionsEndpoint,
+);
+
 router.get("/track/:username/", async (req, res) => {
   const username = req.params.username;
 

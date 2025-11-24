@@ -38,8 +38,6 @@
 </div>
 
 <style>
-	@import "../css/global.css";
-
 	.profile-container {
 		display: grid;
 		grid-template-columns: 7rem 1fr;

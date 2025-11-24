@@ -1,8 +1,8 @@
 <script>
-	import FarLeft from "../svg/FarLeft.svelte";
-	import FarRight from "../svg/FarRight.svelte";
-	import Left from "../svg/Left.svelte";
-	import Right from "../svg/Right.svelte";
+	import FarLeft from "$lib/Svg/FarLeft.svelte";
+	import FarRight from "$lib/Svg/FarRight.svelte";
+	import Left from "$lib/Svg/Left.svelte";
+	import Right from "$lib/Svg/Right.svelte";
 	import axios from "axios";
 
 	let { maxSessions, changeSession } = $props();

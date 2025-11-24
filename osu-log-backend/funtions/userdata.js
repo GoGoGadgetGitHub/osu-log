@@ -4,7 +4,7 @@ const api = require("../osuAPI.js");
 async function getUserDataEndpoint(req, res) {
   const username = req.params.username;
 
-  const userData = await userAPI(username);
+  const userData = await getUserData(username);
   if (!userData) {
     res.status(500).send("FAIL-API");
     return;

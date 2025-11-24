@@ -1,7 +1,6 @@
 <div class="loader"></div>
 
 <style>
-    @import url("../css/global.css");
     .loader {
         position: fixed;
         height: 15px;

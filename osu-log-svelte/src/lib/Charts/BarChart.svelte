@@ -1,10 +1,10 @@
 <script>
     import Chart from "chart.js/auto";
     import "chartjs-adapter-date-fns";
-    import Star from "../svg/Star.svelte";
-    import ScoresTable from "./ScoresTable.svelte";
+    import Star from "$lib/Svg/Star.svelte";
+    import ScoresTable from "$lib/ScoresTable/ScoresTable.svelte";
     import { onMount } from "svelte";
-    import Gear from "../svg/Gear.svelte";
+    import Gear from "$lib/Svg/Gear.svelte";
 
     onMount(() => {
         changeActiveDatasets();
@@ -186,8 +186,6 @@
         const newScales = {};
         const toggels = document.querySelectorAll(".toggle");
 
-        console.log(toggels);
-
         for (const toggle of toggels) {
             if (!toggle.checked) continue;
 
@@ -203,8 +201,6 @@
         data = { datasets };
     }
 </script>
-
-{$inspect(data, scales)}
 
 <div class="spread">
     <div class="chart-container">
@@ -268,50 +264,6 @@
         height: 4rem;
         z-index: 1;
         border-radius: var(--radius) 0 0 var(--radius);
-    }
-
-    .toggles:hover .toggles-container {
-        width: 13rem;
-        height: 4rem;
-        padding: 0 1rem 0 1rem;
-    }
-
-    .toggles {
-        position: absolute;
-        top: 0;
-        right: -1rem;
-        top: 1rem;
-    }
-
-    .toggles-container {
-        width: 0;
-        height: 4rem;
-        overflow: clip;
-        overflow-clip-margin: border-box 1rem;
-        background: var(--background-light);
-        box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.2);
-        border-radius: var(--radius) 0 0 var(--radius);
-        right: 1rem;
-        display: flex;
-        align-items: center;
-        gap: 1.5rem;
-        margin: auto;
-        transition: 0.25s;
-    }
-
-    ul {
-        margin: 0;
-        display: flex;
-        list-style: none;
-        padding: 0;
-        gap: 1rem;
-    }
-
-    li {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: rem;
     }
 
     .switch {

@@ -1,24 +1,33 @@
 <script>
-	let { callback, error } = $props();
+	import axios from "axios";
+
+	let { userData = $bindable(""), error, loading } = $props();
 	let value = $state();
 
-	function handleCallback() {
-		callback(value);
+	async function getUserData() {
+		let resp;
+		try {
+			loading = true;
+			resp = await axios.get(`http://localhost:3000/get-user-data/${value}`);
+		} catch (e) {
+			console.log(e);
+			error = `Could not fetch user data for ${value}`;
+		} finally {
+			userData = resp.data;
+		}
 	}
 </script>
 
 <div class="username">
 	<h2>Enter your username!</h2>
 	<input placeholder="Enter your osu username" type="text" bind:value />
-	<button onclick={handleCallback}>Track!</button>
+	<button onclick={getUserData}>Track!</button>
 	{#if error}
 		<p>{error}</p>
 	{/if}
 </div>
 
 <style>
-	@import "../css/global.css";
-
 	.username {
 		width: max-content;
 		margin: 0 auto;

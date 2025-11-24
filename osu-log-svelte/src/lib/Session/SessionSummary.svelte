@@ -1,13 +1,13 @@
 <script>
     import { derived } from "svelte/store";
-    import A from "../svg/A.svelte";
-    import B from "../svg/B.svelte";
-    import C from "../svg/C.svelte";
-    import D from "../svg/D.svelte";
-    import S from "../svg/S.svelte";
-    import Sh from "../svg/SH.svelte";
-    import X from "../svg/X.svelte";
-    import Xh from "../svg/XH.svelte";
+    import A from "$lib/Svg/A.svelte";
+    import B from "$lib/Svg/B.svelte";
+    import C from "$lib/Svg/C.svelte";
+    import D from "$lib/Svg/D.svelte";
+    import S from "$lib/Svg/S.svelte";
+    import Sh from "$lib/Svg/SH.svelte";
+    import X from "$lib/Svg/X.svelte";
+    import Xh from "$lib/Svg/XH.svelte";
     import { each } from "chart.js/helpers";
 
     let gradeIcons = { X, XH: Xh, S, SH: Sh, A, B, C, D };
@@ -35,8 +35,8 @@
     let { duration } = $derived(sessionScores.meta.time);
 </script>
 
-<h2>Session Summary</h2>
-<div class="session-summary">
+<div class="container">
+    <h2>Session Summary</h2>
     <div class="stats">
         {#each topStats as { name, stat }}
             <span class="stat">
@@ -70,7 +70,7 @@
 </div>
 
 <style>
-    .session-summary {
+    .container {
         color: var(--foreground);
         padding: 0.5rem;
         border-radius: var(--radius);

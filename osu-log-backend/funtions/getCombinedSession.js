@@ -3,27 +3,28 @@ const { getScoresForSession } = require("./getScoresForSession.js");
 async function getCombinedSession(osu_user_id, sessions) {
   console.log(`Getting scores for sessions ${sessions}...`);
 
-  //sort sessions decending
+  //sort sessions decending (i can't remember why i wanted this)
 
   let combined;
 
+  //I'm gonna keep doing this for now, it reuses code i already wrote
+  //I could maybe gain some performanc by combining this into a single db query
   for (const s of sessions) {
     try {
       const session = await getScoresForSession(osu_user_id, s);
-      console.log(session.scores.length, session.meta);
       combined = mergeSession(session, combined);
     } catch (e) {
       console.log(e);
       throw e;
     }
   }
-
-  console.log(combined.scores.length, combined.meta);
+  return combined;
 }
 
 function mergeSession(session, combined) {
   if (!combined) {
     combined = JSON.parse(JSON.stringify(session));
+    return combined;
   }
 
   const combinedStats = combined.meta.stats;
@@ -71,11 +72,11 @@ function mergeSession(session, combined) {
 
 async function getCombinedSessionEndPoint(req, res) {
   const osu_user_id = req.params.userID;
-  const sessions = req.query.id;
+  const sessions = req.query.sessionID;
 
-  if (sessions.length < 2) {
-    console.log(`Need more ids, got ${sessions.length}`);
-    res.sendStatus(500);
+  if (!sessions) {
+    console.log(`No sessions... sessions read ${sessions}`);
+    res.status(500).send("NO_SESSIONS");
     return;
   }
 
@@ -83,7 +84,7 @@ async function getCombinedSessionEndPoint(req, res) {
   try {
     combinedSession = await getCombinedSession(osu_user_id, sessions);
   } catch (e) {
-    res.status(500).json(e);
+    res.status(500).send(e);
     throw e;
   }
 

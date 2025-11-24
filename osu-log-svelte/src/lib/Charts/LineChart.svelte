@@ -3,40 +3,78 @@
     import { onMount } from "svelte";
     import "chartjs-adapter-date-fns";
     import { linear } from "svelte/easing";
+    import { generateRegressionLine } from "./polynomial-reg.js";
 
     let { sessionScores } = $props();
     let lineChart;
 
-    let starsTime = $derived.by(() => {
-        const scores = sessionScores.scores;
-        const data = scores.map((score) => {
-            return {
-                x: new Date(scoreMap["set"](score)).toISOString(),
-                y: scoreMap["sr"](score),
-                meta: { name: scoreMap["song"](score), id: score.score.id },
-            };
-        });
-        return {
-            data,
-            label: "Star Rating",
-            yAxisID: "y",
+    let configs = [
+        {
+            type: "pp",
+            name: "PP",
+        },
+        {
+            type: "sr",
+            name: "Stars",
+        },
+    ];
+    let charts = $derived.by(() => {
+        const tooltip = {
+            callbacks: {
+                title: (node) => {
+                    return node.raw.meta.date;
+                },
+
+                label: (node) => {
+                    return node.raw.meta.name;
+                },
+            },
         };
+
+        const ret = {};
+        for (const { type, name } of configs) {
+            const scores = sessionScores.scores;
+            const data = scores.map((score, index) => {
+                return {
+                    x: index,
+                    y: scoreMap[type](score),
+                    meta: {
+                        name: scoreMap["song"](score),
+                        id: score.score.id,
+                        date: score.score.started_at,
+                    },
+                };
+            });
+            return {
+                values: {
+                    type: "scatter",
+                    data,
+                    label: name,
+                    yAxisID,
+                },
+                regression: {
+                    type: "line",
+                    data: generateRegressionLine(
+                        data.map((s) => s.x),
+                        data.map((s) => s.y),
+                        12,
+                    ),
+                    label: `${name} Regression`,
+                    yAxisID,
+                },
+            };
+        }
+        return ret;
     });
 
-    let ppTime = $derived.by(() => {
-        const scores = sessionScores.scores;
-        const data = scores.map((score) => {
-            return {
-                x: new Date(scoreMap["set"](score)).toISOString(),
-                y: scoreMap["pp"](score),
-                meta: { name: scoreMap["song"](score), id: score.score.id },
-            };
-        });
-        return {
-            data,
-            label: "PP",
-            yAxisID: "y1",
-        };
+    let data = $derived.by(() => {
+        const datasets = [];
+        const toggles = document.querySelectorAll(".toggle");
+        for (const toggle of toggles) {
+            if (!toggle.checked) continue;
+            datasets.push({ ...charts[toggle.dataset.set] });
+        }
+        return { datasets };
     });
 
     const scoreMap = {
@@ -78,31 +116,12 @@
     }
 
     function setupChart(node) {
-        const tooltip = {
-            callbacks: {
-                label: (node) => {
-                    return node.raw.meta.name;
-                },
-            },
-        };
-
-        const datasets = [
-            { ...starsTime, tooltip },
-            { ...ppTime, tooltip },
-        ];
-
         lineChart = new Chart(node, {
-            type: "line",
-            data: {
-                datasets,
-            },
+            data,
             options: {
                 scales: {
                     x: {
-                        type: "time",
-                        time: {
-                            tooltipFormat: "yyyy-MM-dd HH:mm",
-                        },
+                        type: "linear",
                     },
                     y: {
                         type: "linear",
@@ -121,7 +140,7 @@
 
     function chart(node) {
         setupChart(node);
-        lineChart.canvas.addEventListener("click", focusScore);
+        //lineChart.canvas.addEventListener("click", focusScore);
         return () => {
             lineChart.destroy();
         };

@@ -1,16 +1,16 @@
 <script>
     //TODO: Have a look at user tags
     import { each } from "chart.js/helpers";
-    import FarLeft from "../svg/FarLeft.svelte";
-    import FarRight from "../svg/FarRight.svelte";
+    import FarLeft from "$lib/Svg/FarLeft.svelte";
+    import FarRight from "$lib/Svg/FarRight.svelte";
     import BarChart from "./BarChart.svelte";
-    import LineChartOverTime from "./LineChartOverTime.svelte";
+    import LineChart from "./LineChart.svelte";
     let { sessionScores } = $props();
 
     let activeTab = $state("time");
 
     const tabMap = [
-        { name: "time", title: "Time", component: LineChartOverTime },
+        { name: "time", title: "Time", component: LineChart },
         { name: "spread", title: "Spread", component: BarChart },
     ];
 </script>

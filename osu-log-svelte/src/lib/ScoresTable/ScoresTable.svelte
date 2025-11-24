@@ -1,18 +1,18 @@
 <script>
-	import A from "../svg/A.svelte";
-	import B from "../svg/B.svelte";
-	import C from "../svg/C.svelte";
-	import D from "../svg/D.svelte";
-	import F from "../svg/F.svelte";
-	import S from "../svg/S.svelte";
-	import Sh from "../svg/SH.svelte";
-	import Xh from "../svg/XH.svelte";
-	import X from "../svg/X.svelte";
-	import Star from "../svg/Star.svelte";
+	import A from "$lib/Svg/A.svelte";
+	import B from "$lib/Svg/B.svelte";
+	import C from "$lib/Svg/C.svelte";
+	import D from "$lib/Svg/D.svelte";
+	import F from "$lib/Svg/F.svelte";
+	import S from "$lib/Svg/S.svelte";
+	import Sh from "$lib/Svg/SH.svelte";
+	import Xh from "$lib/Svg/XH.svelte";
+	import X from "$lib/Svg/X.svelte";
+	import Star from "$lib/Svg/Star.svelte";
 	import { crossfade, draw, fade, slide } from "svelte/transition";
-	import Pagination from "./Pagination.svelte";
-	import LargeLoader from "./LargeLoader.svelte";
-	import SmallLoader from "./SmallLoader.svelte";
+
+	import LargeLoader from "$lib/Loaders/LargeLoader.svelte";
+	import SmallLoader from "$lib/Loaders/SmallLoader.svelte";
 	import SortingDropdown from "./SortingDropdown.svelte";
 	import SortingArrows from "./SortingArrows.svelte";
 
@@ -31,7 +31,7 @@
 		set: { active: false, order: NO_ORDER },
 	});
 
-	let { sessionScores, maxSessions, changeSession, loading } = $props();
+	let { sessionScores, changeSession, loading } = $props();
 	let gradeIcons = { X, XH: Xh, S, SH: Sh, A, B, C, D, F };
 
 	let displayedScores = $derived.by(() => {
@@ -245,9 +245,6 @@
 </div>
 
 <div class="table-below">
-	{#if maxSessions}
-		<Pagination {maxSessions} {changeSession} />
-	{/if}
 	{#if sessionScores.scores}
 		<div>
 			{dateFormatter.format(new Date(sessionScores.meta.time.start))}
@@ -258,5 +255,5 @@
 </div>
 
 <style>
-	@import "../css/components/scorestable.css";
+	@import "./scoretable.css";
 </style>

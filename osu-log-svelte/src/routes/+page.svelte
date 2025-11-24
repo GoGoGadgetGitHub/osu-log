@@ -1,104 +1,34 @@
 <script>
-    import Profile from "./Profile.svelte";
-    import Username from "./Username.svelte";
-    import Pagination from "./Pagination.svelte";
-    import ScoresTable from "./ScoresTable.svelte";
-    import Star from "../svg/Star.svelte";
-    import LargeLoader from "./LargeLoader.svelte";
+    import Profile from "$lib/User/Profile.svelte";
+    import Username from "$lib/User/Username.svelte";
+    import Star from "$lib/Svg/Star.svelte";
+    import LargeLoader from "$lib/Loaders/LargeLoader.svelte";
+    import SessionGroup from "$lib/SessionGroup.svelte";
+
     import { slide } from "svelte/transition";
     import axios from "axios";
-    import SessionSummary from "./SessionSummary.svelte";
-    import LineChartOverTime from "./LineChartOverTime.svelte";
-    import Charts from "./Charts.svelte";
 
-    let loading = $state(false);
-    let sessionID = $state(0);
     let userData = $state("");
+    let loading = $state(false);
     let error = $state("");
-    let sessionScores = $state({});
-    let maxSessions = $state(0);
-
-    //I still can't move the away from her since the Username component needs it
-    //so this and all of the states it mutates needs to stay here
-    //that includes changeSession
-    async function handelTrackClicked(usr) {
-        userData = "";
-        error = "";
-        loading = true;
-        let initialData;
-
-        if (!usr) {
-            error = "No username :(";
-            return;
-        }
-
-        try {
-            initialData = await axios.get(`http://localhost:3000/track/${usr}`);
-        } catch (e) {
-            console.log(e.response.data);
-            return;
-        } finally {
-            loading = false;
-        }
-        if (initialData.data === "NO_SCORES") {
-            error =
-                "No scored in the last 48 hours, and no scores saved. Nothing to display :(";
-            loading = false;
-            return;
-        }
-        ({ userData, sessionScores, maxSessions } = initialData.data);
-        sessionID = sessionScores.meta.id;
-    }
-
-    async function testMultiSession() {
-        let session;
-        try {
-            session = await axios.get(
-                `http://localhost:3000/get-combined-session/11628790/?id=0&id=1`,
-            );
-        } catch (e) {
-            console.log(e);
-            return;
-        } finally {
-            console.log(session.data);
-        }
-    }
-
-    async function changeSession(id) {
-        sessionID = id;
-        let session;
-        if (userData !== "") {
-            loading = true;
-            try {
-                session = await axios.get(
-                    `http://localhost:3000/get-scores-for-session/${userData.id}/${id}`,
-                );
-            } catch (e) {
-                console.log(e);
-                return;
-            } finally {
-                loading = false;
-                sessionScores = session.data;
-                console.log(sessionScores);
-            }
-        }
-    }
 </script>
 
 <div class="main">
-    <a href onclick={testMultiSession}>Test</a>
-    <Username callback={handelTrackClicked} {error} />
+    <!-- <a href onclick={changeSession}>Test</a> -->
+    <Username bind:userData {error} {loading} />
     {#if loading && !userData}
         <LargeLoader />
     {:else if userData && !error}
-        <Profile {userData} />
-        <ScoresTable {sessionScores} {maxSessions} {changeSession} {loading} />
-        <SessionSummary {sessionScores} />
-        <Charts {sessionScores} />
+        <div class="profile-and-session">
+            <Profile {userData} />
+        </div>
+        <SessionGroup {userData} {error} {loading} />
     {/if}
 </div>
 
 <style>
+    @import "../css/global.css";
+
     .main {
         max-width: 1000px;
         margin: auto;
