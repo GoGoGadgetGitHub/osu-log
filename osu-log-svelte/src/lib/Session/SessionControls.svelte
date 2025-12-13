@@ -113,6 +113,7 @@
             sessions[day].active = true;
             e.target.parentElement.classList.add("selected");
         }
+        document.dispatchEvent(new Event("calButtonClicked"));
     }
 
     async function updateSessionScores() {
@@ -124,7 +125,6 @@
             }
         }
 
-        console.log("start");
         let resp;
         try {
             resp = await axios.get(
@@ -135,13 +135,11 @@
                     },
                 },
             );
-            console.log("end fetch");
         } catch (e) {
             console.log(e);
             return;
         } finally {
             sessionScores = resp.data;
-            console.log("end set session scores");
         }
     }
 </script>

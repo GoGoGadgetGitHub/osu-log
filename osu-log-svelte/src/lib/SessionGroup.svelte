@@ -11,6 +11,7 @@
 <SessionControls bind:sessionScores {userData} />
 
 {#if sessionScores.scores}
+    <ScoresTable {sessionScores} />
     <SessionSummary {sessionScores} />
     <Charts {sessionScores} />
 {/if}

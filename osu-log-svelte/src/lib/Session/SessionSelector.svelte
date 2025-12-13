@@ -1,5 +1,5 @@
 <script>
-    import Toggle from "$lib/Toggle.svelte";
+    import Toggle from "$lib/UIComponents/Toggle.svelte";
     import { onDestroy, onMount } from "svelte";
 
     let { id, plays, updateSessionScores } = $props();

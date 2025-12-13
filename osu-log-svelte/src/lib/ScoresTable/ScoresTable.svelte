@@ -11,8 +11,8 @@
 	import Star from "$lib/Svg/Star.svelte";
 	import { crossfade, draw, fade, slide } from "svelte/transition";
 
-	import LargeLoader from "$lib/Loaders/LargeLoader.svelte";
-	import SmallLoader from "$lib/Loaders/SmallLoader.svelte";
+	import LargeLoader from "$lib/UIComponents/Loaders/LargeLoader.svelte";
+	import SmallLoader from "$lib/UIComponents/Loaders/SmallLoader.svelte";
 	import SortingDropdown from "./SortingDropdown.svelte";
 	import SortingArrows from "./SortingArrows.svelte";
 

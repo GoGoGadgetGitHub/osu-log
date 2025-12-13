@@ -8,7 +8,7 @@
 		let resp;
 		try {
 			loading = true;
-			resp = await axios.get(`http://localhost:3000/get-user-data/${value}`);
+			resp = await axios.get(`http://localhost:3000/track/${value}`);
 		} catch (e) {
 			console.log(e);
 			error = `Could not fetch user data for ${value}`;

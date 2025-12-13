@@ -123,6 +123,7 @@
     let scales = $derived.by(() => {
         const scales = {};
         const toggles = document.querySelectorAll(".toggle");
+        let xAxisKey;
         for (const toggle of toggles) {
             if (!toggle.checked) continue;
             xAxisKey = Object.keys(dataMap[toggle.dataset.set].xAxis)[0];
@@ -202,44 +203,40 @@
     }
 </script>
 
+<!--HTML-->
 <div class="spread">
     <div class="chart-container">
         <canvas id="barChart" {@attach chart}></canvas>
     </div>
     <div class="toggles">
-        <div class="hover">
-            <div class="gear-icon"><Gear /></div>
-        </div>
-        <div class="toggles-container">
-            <ul>
-                {#each Object.keys(dataMap) as data}
-                    <li>
-                        <label class="switch" for="toggle-{data}">
-                            {#if data === "sr"}
-                                <input
-                                    class="toggle"
-                                    id="toggle-{data}"
-                                    type="checkbox"
-                                    checked
-                                    data-set={data}
-                                    onclick={(e) => changeActiveDatasets(e)}
-                                />
-                            {:else}
-                                <input
-                                    class="toggle"
-                                    id="toggle-{data}"
-                                    type="checkbox"
-                                    data-set={data}
-                                    onclick={(e) => changeActiveDatasets(e)}
-                                />
-                            {/if}
-                            <div class="slider round"></div>
-                        </label>
-                        {dataMap[data].label}
-                    </li>
-                {/each}
-            </ul>
-        </div>
+        <ul>
+            {#each Object.keys(dataMap) as data}
+                <li>
+                    <label class="switch" for="toggle-{data}">
+                        {#if data === "sr"}
+                            <input
+                                class="toggle"
+                                id="toggle-{data}"
+                                type="checkbox"
+                                checked
+                                data-set={data}
+                                onclick={(e) => changeActiveDatasets(e)}
+                            />
+                        {:else}
+                            <input
+                                class="toggle"
+                                id="toggle-{data}"
+                                type="checkbox"
+                                data-set={data}
+                                onclick={(e) => changeActiveDatasets(e)}
+                            />
+                        {/if}
+                        <div class="slider round"></div>
+                    </label>
+                    {dataMap[data].label}
+                </li>
+            {/each}
+        </ul>
     </div>
 </div>
 
@@ -250,20 +247,33 @@
 
     .spread {
         color: var(--foreground);
-        display: grid;
+    }
+
+    .toggles {
+        position: relative;
+        height: 4rem;
+        overflow: clip;
+        overflow-clip-margin: border-box 1rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 1.5rem;
+        transition: 0.25s;
+    }
+
+    ul {
+        margin: 0;
+        display: flex;
+        list-style: none;
+        padding: 0;
         gap: 1rem;
     }
 
-    .hover {
+    li {
         display: flex;
+        flex-direction: column;
         align-items: center;
-        left: -2rem;
-        position: absolute;
-        background: var(--foreground);
-        width: 1rem;
-        height: 4rem;
-        z-index: 1;
-        border-radius: var(--radius) 0 0 var(--radius);
+        gap: rem;
     }
 
     .switch {
@@ -308,9 +318,7 @@
     input:checked + .slider::before {
         transform: translate(1.1rem, -50%);
     }
-    .toggles-container {
-        position: relative;
-    }
+
     .gear-icon {
         height: 1rem;
         width: 1rem;

@@ -70,26 +70,7 @@ router.get("/track/:username/", async (req, res) => {
     }
   }
 
-  let sessionScores;
-  try {
-    sessionScores = await getScoresForSession(user.id, "latest");
-  } catch (e) {
-    if (e === err.NO_SCORES) {
-      console.log(
-        "No scores for this user in the last 48 hours, and they have no scores saved...",
-      );
-      res.status(200).send(e.message);
-    } else {
-      res.status(500).send(e);
-    }
-    return;
-  }
-
-  res.status(200).send({
-    userData: user,
-    sessionScores,
-    maxSessions: sessionScores.meta.id,
-  });
+  res.status(200).send(user);
 });
 
 module.exports = router;

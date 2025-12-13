@@ -2,7 +2,7 @@
     import Profile from "$lib/User/Profile.svelte";
     import Username from "$lib/User/Username.svelte";
     import Star from "$lib/Svg/Star.svelte";
-    import LargeLoader from "$lib/Loaders/LargeLoader.svelte";
+    import LargeLoader from "$lib/UIComponents/Loaders/LargeLoader.svelte";
     import SessionGroup from "$lib/SessionGroup.svelte";
 
     import { slide } from "svelte/transition";
