@@ -9,12 +9,13 @@
 	import Xh from "$lib/Svg/XH.svelte";
 	import X from "$lib/Svg/X.svelte";
 	import Star from "$lib/Svg/Star.svelte";
-	import { crossfade, draw, fade, slide } from "svelte/transition";
+	import { fade, slide } from "svelte/transition";
 
 	import LargeLoader from "$lib/UIComponents/Loaders/LargeLoader.svelte";
 	import SmallLoader from "$lib/UIComponents/Loaders/SmallLoader.svelte";
 	import SortingDropdown from "./SortingDropdown.svelte";
 	import SortingArrows from "./SortingArrows.svelte";
+	import Pagination from "./Pagination.svelte";
 
 	//TODO: add scores sort dropdown for mobile
 
@@ -34,6 +35,13 @@
 	let { sessionScores, changeSession, loading } = $props();
 	let gradeIcons = { X, XH: Xh, S, SH: Sh, A, B, C, D, F };
 
+	let index = $state(0);
+	const paginationWidth = 100;
+	let paginate = $derived(
+		sessionScores.scores.length > paginationWidth ? true : false,
+	);
+	let paginationStartIndex = $derived(paginationWidth * index);
+
 	let displayedScores = $derived.by(() => {
 		let criteria;
 
@@ -44,19 +52,29 @@
 			}
 		});
 
+		let ret;
 		if (!criteria || lastOrder[criteria].order === NO_ORDER) {
-			return sessionScores.scores;
+			ret = sessionScores.scores;
+		} else {
+			ret = sessionScores.scores.toSorted((a, b) => {
+				a = scoreMap[criteria](a);
+				b = scoreMap[criteria](b);
+
+				if (typeof a === "string") {
+					return lastOrder[criteria].order * a.localeCompare(b);
+				}
+				return lastOrder[criteria].order * (a - b);
+			});
 		}
 
-		return sessionScores.scores.toSorted((a, b) => {
-			a = scoreMap[criteria](a);
-			b = scoreMap[criteria](b);
+		if (paginate) {
+			return ret.slice(
+				paginationStartIndex,
+				paginationStartIndex + paginationWidth,
+			);
+		}
 
-			if (typeof a === "string") {
-				return lastOrder[criteria].order * a.localeCompare(b);
-			}
-			return lastOrder[criteria].order * (a - b);
-		});
+		return ret;
 	});
 
 	let dateFormatter = new Intl.DateTimeFormat("en-US", {
@@ -150,6 +168,63 @@
 	];
 </script>
 
+{#snippet tableRow(score, performance)}
+	<tr
+		in:fade
+		style="background: center / contain no-repeat linear-gradient(to right, var(--background-rgba0), var(--background-rgba1) 95%), url({score
+			.beatmapset.covers.slimcover})"
+		id={`score-${score.id}`}
+	>
+		<th class="grade-icon">
+			<div class="icon-wrapper">
+				<svelte:component
+					this={score.passed ? gradeIcons[score.rank] : gradeIcons.F}
+				/>
+			</div>
+		</th>
+
+		<th class="title">
+			<a href={score.beatmap.url}><span>{score.beatmapset.title}</span></a>
+		</th>
+
+		<!--TODO:mod icons?-->
+		<th class="mods">
+			{#if score.mods}
+				<div>
+					{#each score.mods as { acronym }}
+						{acronym}
+					{/each}
+				</div>
+			{/if}
+		</th>
+
+		<th class="stars">
+			{performance
+				? performance.attributes.stars.toFixed(2)
+				: score.beatmap.difficulty_rating}
+		</th>
+
+		<th class="acc">{(score.accuracy * 100).toFixed(2)}</th>
+
+		<th class="hits">
+			<div>
+				{`${score.statistics.great ? score.statistics.great : 0}/
+								${score.statistics.ok ? score.statistics.ok : 0}/
+								${score.statistics.meh ? score.statistics.meh : 0}/
+								${score.statistics.miss ? score.statistics.miss : 0}`}
+			</div>
+		</th>
+
+		<th class="pp">
+			{scoreMap.pp({ score, performance }).toFixed(2)}
+		</th>
+
+		<th class="last-col time">
+			{dateFormatter.format(new Date(score.ended_at))}
+		</th>
+	</tr>
+{/snippet}
+
 <div transition:slide class="datatable-container">
 	<SortingDropdown />
 
@@ -178,81 +253,28 @@
 		</thead>
 
 		<tbody>
-			{#each displayedScores as { score, performance }}
+			{#each displayedScores as { score, performance }, index}
 				{#await loadImage(score.beatmapset.covers.slimcover)}
 					<tr transition:fade style="position: relative;">
 						<SmallLoader />
 					</tr>
 				{:then}
-					<tr
-						in:fade
-						style="background: center / contain no-repeat linear-gradient(to right, var(--background-rgba0), var(--background-rgba1) 95%), url({score
-							.beatmapset.covers.slimcover})"
-						id={`score-${score.id}`}
-					>
-						<th class="grade-icon">
-							<div class="icon-wrapper">
-								<svelte:component
-									this={score.passed ? gradeIcons[score.rank] : gradeIcons.F}
-								/>
-							</div>
-						</th>
-
-						<th class="title">
-							<a href={score.beatmap.url}>{score.beatmapset.title}</a>
-						</th>
-
-						<!--TODO:mod icons?-->
-						<th class="mods">
-							{#if score.mods}
-								<div>
-									{#each score.mods as { acronym }}
-										{acronym}
-									{/each}
-								</div>
-							{/if}
-						</th>
-
-						<th class="stars">
-							{performance
-								? performance.attributes.stars.toFixed(2)
-								: score.beatmap.difficulty_rating}
-						</th>
-
-						<th class="acc">{(score.accuracy * 100).toFixed(2)}</th>
-
-						<th class="hits">
-							<div>
-								{`${score.statistics.great ? score.statistics.great : 0}/
-								${score.statistics.ok ? score.statistics.ok : 0}/
-								${score.statistics.meh ? score.statistics.meh : 0}/
-								${score.statistics.miss ? score.statistics.miss : 0}`}
-							</div>
-						</th>
-
-						<th class="pp">
-							{scoreMap.pp({ score, performance }).toFixed(2)}
-						</th>
-
-						<th class="last-col time">
-							{dateFormatter.format(new Date(score.ended_at))}
-						</th>
-					</tr>
+					{@render tableRow(score, performance)}
 				{/await}
 			{/each}
 		</tbody>
 	</table>
 </div>
 
-<div class="table-below">
-	{#if sessionScores.scores}
-		<div>
-			{dateFormatter.format(new Date(sessionScores.meta.time.start))}
-			-
-			{dateFormatter.format(new Date(sessionScores.meta.time.end))}
-		</div>
-	{/if}
-</div>
+{#if paginate}
+	<div class="table-below">
+		<Pagination
+			bind:index
+			numberOfScores={sessionScores.scores.length}
+			{paginationWidth}
+		/>
+	</div>
+{/if}
 
 <style>
 	@import "./scoretable.css";

@@ -1,7 +1,6 @@
 <script>
     import Toggle from "$lib/UIComponents/Toggle.svelte";
     import { onDestroy, onMount } from "svelte";
-
     let { id, plays, updateSessionScores } = $props();
 
     onMount(async () => {
@@ -34,6 +33,7 @@
         justify-content: space-between;
         padding: 0.5rem;
         border-radius: var(--radius);
+        animation: fadeIn 0.45s ease-out forwards;
     }
 
     :global(.id + input:checked) {

@@ -171,6 +171,7 @@
             data,
             options: {
                 scales,
+                maintainAspectRatio: false,
             },
         });
     }
@@ -242,7 +243,12 @@
 
 <style>
     .chart-container {
+        position: relative;
         min-height: 30rem;
+    }
+
+    .chart-container canvas {
+        width: 100% !important;
     }
 
     .spread {
@@ -317,10 +323,5 @@
 
     input:checked + .slider::before {
         transform: translate(1.1rem, -50%);
-    }
-
-    .gear-icon {
-        height: 1rem;
-        width: 1rem;
     }
 </style>

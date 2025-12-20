@@ -6,6 +6,8 @@
     import SessionSelector from "./SessionSelector.svelte";
     import { resolve } from "$app/paths";
     import { onMount } from "svelte";
+    import { fade, slide } from "svelte/transition";
+    import { flip } from "svelte/animate";
 
     const days = ["S", "M", "T", "W", "T", "F", "S"];
     const months = [
@@ -144,6 +146,7 @@
     }
 </script>
 
+<!--HTML-->
 {#snippet CalanderButtonWithSession(date, selectedClass)}
     <span class="date has-sessions {selectedClass}">
         <button
@@ -156,7 +159,7 @@
     </span>
 {/snippet}
 
-<div class="container">
+<div transition:fade class="container">
     <div class="calander">
         <div class="month">
             <button id="left" onclick={calArrowClicked}>
@@ -204,7 +207,7 @@
         <div class="grid">
             {#each Object.keys(sessions) as day}
                 {#if sessions[day].active}
-                    {#each sessions[day].sessions as session}
+                    {#each sessions[day].sessions as session (session.session_id)}
                         <SessionSelector
                             id={session.session_id}
                             plays={session.plays}
@@ -373,5 +376,14 @@
     :global(.month svg) {
         width: 0.5rem;
         height: 1rem;
+    }
+
+    @media (max-width: 800px) {
+        .container {
+            flex-direction: column;
+        }
+        .sessions .grid {
+            grid-template-columns: 1fr;
+        }
     }
 </style>

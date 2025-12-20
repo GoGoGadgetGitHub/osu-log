@@ -43,8 +43,6 @@
 <style>
     .charts-container {
         position: relative;
-        display: grid;
-        grid-template-rows: min-content;
         padding: 1rem;
         background: var(--background-light);
         border-radius: 0 var(--radius) var(--radius) var(--radius);

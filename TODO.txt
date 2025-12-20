@@ -1,13 +1,10 @@
-Graphs:
-	Add Controls for toggeling regression and scatter for a stat
-	Add BPM
-	Add Acc
-
 Table:
 	Add pagination
 
 Session Summary:
 	Fix Play time
+
+Fix change user not updating session controls
 
 Add more stats to profile component use bathbot as refrence
 

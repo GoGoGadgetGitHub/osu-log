@@ -1,5 +1,5 @@
 <script>
-    import Chart, { elements } from "chart.js/auto";
+    import Chart, { elements, plugins } from "chart.js/auto";
     import { onMount } from "svelte";
     import "chartjs-adapter-date-fns";
     import { linear } from "svelte/easing";
@@ -8,6 +8,7 @@
     import Radio from "$lib/UIComponents/Radio.svelte";
     import Toggle from "$lib/UIComponents/Toggle.svelte";
     import { writable } from "svelte/store";
+    import { callback } from "chart.js/helpers";
 
     onMount(() => {
         changeActiveDatasets();
@@ -81,18 +82,6 @@
 
     let yAxes = $state({});
     let charts = $derived.by(() => {
-        const tooltip = {
-            callbacks: {
-                title: (node) => {
-                    return node.raw.meta.date;
-                },
-
-                label: (node) => {
-                    return node.raw.meta.name;
-                },
-            },
-        };
-
         const ret = {};
         for (const { type, name, color } of configs) {
             const scores = sessionScores.scores;
@@ -139,7 +128,6 @@
         const toggles = document.querySelectorAll(
             ".line .toggle .switch input",
         );
-        console.log(toggles);
 
         const radioButtons = {};
         for (const { name } of configs) {
@@ -229,15 +217,68 @@
         tableItem.style.boxShadow = "unset";
     }
 
+    const verticalLineHover = {
+        id: "verticalLineHover",
+        beforeDatasetDraw(chart, args, plugins) {
+            const {
+                ctx,
+                chartArea: { top, bottom, heiht },
+            } = chart;
+            ctx.save();
+
+            chart.getDatasetMeta(0).data.forEach((dataPoint, index) => {
+                if (dataPoint.active === true) {
+                    ctx.beginPath();
+                    ctx.strokeStyle = "gray";
+                    ctx.moveTo(dataPoint.x, top);
+                    ctx.lineTo(dataPoint.x, bottom);
+                    ctx.stroke();
+                }
+            });
+        },
+    };
+
     function setupChart(node) {
         lineChart = new Chart(node, {
             data: { datasets },
+            plugins: [verticalLineHover],
             options: {
                 scales: {
                     x: {
                         type: "linear",
                     },
                     ...yAxes,
+                },
+                maintainAspectRatio: false,
+                interaction: {
+                    mode: "index",
+                    intersect: false,
+                },
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: (ctx) => {
+                                const value =
+                                    Math.round(ctx.parsed.y * 100) / 100;
+                                return `${ctx.dataset.label}: ${value}`;
+                            },
+                            labelColor: function (ctx) {
+                                const color = configs.filter((config) => {
+                                    return config.name === ctx.dataset.label;
+                                })[0].color;
+                                return {
+                                    backgroundColor: color,
+                                    borderColor: color
+                                }
+                            },
+                            title: (ctx) => {
+                                return ctx[0].raw.meta.name;
+                            },
+                        },
+                        filter: (ctx) => {
+                            return !ctx.dataset.label.includes("Trend");
+                        },
+                    },
                 },
             },
         });
@@ -288,7 +329,12 @@
 <!--CSS-->
 <style>
     .chart-container {
+        position: relative;
         min-height: 30rem;
+    }
+
+    .chart-container canvas {
+        width: 100% !important;
     }
 
     .toggles {
@@ -298,10 +344,12 @@
         background: var(--background-light);
         right: 1rem;
         align-items: center;
-        gap: 1.5rem;
+        gap: 0.3rem;
         margin: auto;
         transition: 0.25s;
         display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
     }
 
     .toggle {

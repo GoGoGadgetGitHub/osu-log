@@ -35,6 +35,7 @@
         display: grid;
         row-gap: 1rem;
     }
+
     @media (max-width: 800px) {
         .main {
             width: 100%;

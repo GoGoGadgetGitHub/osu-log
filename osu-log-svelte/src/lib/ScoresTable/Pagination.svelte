@@ -5,137 +5,68 @@
 	import Right from "$lib/Svg/Right.svelte";
 	import axios from "axios";
 
-	let { maxSessions, changeSession } = $props();
-	let pointer = $derived(maxSessions <= 4 ? maxSessions : 4);
+	let { numberOfScores, index = $bindable(0), paginationWidth } = $props();
 
 	let pages = $derived.by(() => {
-		let selected = "";
-		let pages = [];
-		if (maxSessions <= 4) {
-			for (let i = 0; i <= maxSessions; i++) {
-				i === maxSessions
-					? pages.push({ value: i, selected: "selected" })
-					: pages.push({ value: i, selected });
-			}
-		} else {
-			for (let i = 0; i <= 4; i++) {
-				i === 4
-					? pages.push({
-							value: maxSessions - (5 - (i + 1)),
-							selected: "selected",
-						})
-					: pages.push({ value: maxSessions - (5 - (i + 1)), selected });
-			}
+		let ret = [];
+		const numPages = Math.ceil(numberOfScores / paginationWidth);
+		for (let i = 0; i <= numPages - 1; i++) {
+			ret.push(i);
 		}
-		return pages;
+		return ret;
 	});
 
+	function end() {
+		index = pages.length - 1;
+	}
+	function start() {
+		index = 0;
+	}
+
+	const left = () => move(-1);
+	const right = () => move(1);
 	function move(direction) {
-		const right = direction == 1;
-		const pointerMax = maxSessions <= 4 ? maxSessions : 4;
-
-		const atEnd =
-			(pages[pointerMax].value === maxSessions && right) ||
-			(pages[0].value === 0 && !right);
-
-		const pointerAtBound =
-			(pointer === pointerMax && right) || (pointer === 0 && !right);
-
-		const notMiddle = pointer != 2;
-
-		if (pointerAtBound) {
+		const newIndex = index + direction;
+		if (newIndex > pages.length - 1) {
 			return;
 		}
-		if (maxSessions <= 4 || atEnd || notMiddle) {
-			pointer = pointer + direction;
-		} else {
-			pages = pages.map((page) => ({
-				...page,
-				value: page.value + direction,
-			}));
+		if (newIndex < 0) {
+			return;
 		}
+		index = newIndex;
 	}
 
-	function moveEnd() {
-		const end = maxSessions <= 4 ? maxSessions + 1 : 5;
-		pages = pages.map((page, i) => {
-			return {
-				...page,
-				value: maxSessions - (end - (i + 1)),
-			};
-		});
-		pointer = maxSessions <= 4 ? maxSessions : 4;
-		updateSelected();
-		changeSession(pages[pointer].value);
-	}
-
-	function moveStart() {
-		pages = pages.map((page, i) => {
-			return {
-				...page,
-				value: i,
-			};
-		});
-		pointer = 0;
-		updateSelected();
-		changeSession(pages[pointer].value);
-	}
-
-	function moveN(page) {
-		page.preventDefault();
-
-		let moves, direction;
-		if (page.target.id !== "") {
-			moves = 1;
-			direction = page.target.id === "right" ? 1 : -1;
-		} else {
-			const selectedSession = page.target.innerHTML;
-			const currentSession = pages[pointer].value;
-			moves = selectedSession - currentSession;
-			direction = Math.sign(moves);
-		}
-
-		for (let i = 1; i <= Math.abs(moves); i++) {
-			move(direction);
-		}
-		updateSelected();
-		changeSession(pages[pointer].value);
-	}
-
-	function updateSelected() {
-		pages = pages.map((page) =>
-			pages[pointer] === page
-				? {
-						...page,
-						selected: "selected",
-					}
-				: {
-						...page,
-						selected: "",
-					},
-		);
+	const goToSelectedHandeler = (e) => goToSelected(e);
+	function goToSelected(e) {
+		index = Number(e.target.dataset.index);
 	}
 </script>
 
 <div class="pagination bottom-gap">
 	<div class="pag-icon wide">
-		<a href onclick={moveStart}><FarLeft class="nav-icon" /></a>
+		<button onclick={start}><FarLeft class="nav-icon" /></button>
 	</div>
 	<div class="pag-icon">
-		<a href id="left" onclick={moveN}><Left /></a>
+		<button onclick={left}><Left /></button>
 	</div>
 
 	{#each pages as page}
-		<a href class="page {page.selected}" onclick={moveN} role="button"
-			>{page.value}</a
-		>
+		{#if page === index}
+			<button data-index={page} class="page selected" onclick={goToSelected}
+				>{page + 1}</button
+			>
+		{:else}
+			<button data-index={page} class="page" onclick={goToSelectedHandeler}
+				>{page + 1}</button
+			>
+		{/if}
 	{/each}
 
 	<div class="pag-icon">
-		<a href id="right" onclick={moveN}><Right /></a>
+		<button onclick={right}><Right /></button>
 	</div>
 	<div class="pag-icon wide">
-		<a href onclick={moveEnd}><FarRight /></a>
+		<button href onclick={end}><FarRight /></button>
 	</div>
 </div>
 
@@ -150,12 +81,13 @@
 		fill: var(--foreground);
 	}
 
-	.pag-icon a {
+	.pag-icon button {
 		display: flex;
 		align-items: center;
+		background: none;
+		border: none;
 	}
 
-	/*NOTE: GLOBAL HERE*/
 	:global(.pag-icon.wide svg) {
 		height: 1rem;
 		width: 1.1rem;
@@ -171,6 +103,11 @@
 		text-align: center;
 		transition: 0.2s ease-in-out;
 		text-decoration: none;
+		background: var(--background-light);
+		border: none;
+		height: 30px;
+		width: 30px;
+		border-radius: 50%;
 	}
 
 	.pag-icon:hover,
