@@ -1,13 +1,10 @@
 const express = require("express");
 const { userData, userDataEndpoint } = require("../funtions/userdata.js");
 const { addScores, addScoresEndpoint } = require("../funtions/updateplays.js");
-const { getScoresForSession, getScoresForSessionEndpoint } = require(
-  "../funtions/getScoresForSession.js",
-);
 const { getCombinedSessionEndPoint } = require(
   "../funtions/getCombinedSession.js",
 );
-const { getSessions, getSessionsEndpoint } = require(
+const { getSessionsEndpoint } = require(
   "../funtions/getSessions.js",
 );
 const router = express.Router();
@@ -23,7 +20,7 @@ router.get(
   userDataEndpoint,
 );
 
-router.get(
+router.post(
   "/get-combined-session/:userID",
   getCombinedSessionEndPoint,
 );
@@ -31,11 +28,6 @@ router.get(
 router.get(
   "/update-scores-for-user/:userID",
   addScoresEndpoint,
-);
-
-router.get(
-  "/get-scores-for-session/:userID/:sessionID",
-  getScoresForSessionEndpoint,
 );
 
 router.get(

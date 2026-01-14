@@ -8,6 +8,7 @@
     import { onMount } from "svelte";
     import { fade, slide } from "svelte/transition";
     import { flip } from "svelte/animate";
+    import Radio from "$lib/UIComponents/Radio.svelte";
 
     const days = ["S", "M", "T", "W", "T", "F", "S"];
     const months = [
@@ -32,11 +33,22 @@
     });
 
     let { sessionScores = $bindable({}), userData } = $props();
+
     let month = $state(new Date().getMonth());
     let year = $state(new Date().getFullYear());
     let sessions = $state([]);
+    let message = $state(
+        "Click on one of the highlighted dates on the calender",
+    );
 
-    onMount(async () => {
+    onMount(getSessions);
+
+    $effect(() => {
+        getSessions();
+    });
+
+    async function getSessions() {
+        message = "Click on one of the highlighted dates on the calender";
         let resp;
         try {
             resp = await axios.get(
@@ -47,7 +59,15 @@
         } finally {
             sessions = resp.data;
         }
-    });
+
+        if (Object.keys(sessions).length === 0) {
+            message =
+                "No sessions have been logged, and you havn't played in a while... (washed)";
+        }
+
+        updateSessionScores();
+        sessionScores = {};
+    }
 
     let dateNumbers = $derived.by(() => {
         let days = [];
@@ -110,31 +130,44 @@
 
         if (sessions[day].active) {
             sessions[day].active = false;
+            sessions[day].sessions.forEach(
+                (session) => (session.active = false),
+            );
             e.target.parentElement.classList.remove("selected");
         } else {
+            message = "";
             sessions[day].active = true;
+            sessions[day].sessions.forEach(
+                (session) => (session.active = true),
+            );
             e.target.parentElement.classList.add("selected");
         }
-        document.dispatchEvent(new Event("calButtonClicked"));
+        updateSessionScores();
     }
 
     async function updateSessionScores() {
         const sessionList = [];
-        const checkboxes = document.querySelectorAll(".session-selector");
-        for (const checkbox of checkboxes) {
-            if (checkbox.checked) {
-                sessionList.push(checkbox.dataset.value);
+
+        for (const day of Object.keys(sessions)) {
+            for (const session of sessions[day].sessions) {
+                if (session.active) {
+                    sessionList.push(session.session_id);
+                }
             }
+        }
+
+        if (sessionList.length === 0) {
+            sessionScores = {};
+            return;
         }
 
         let resp;
         try {
-            resp = await axios.get(
+            resp = await axios.post(
                 `http://localhost:3000/get-combined-session/${userData.id}/`,
                 {
-                    params: {
-                        sessionID: sessionList,
-                    },
+                    sessions: sessionList,
+                    filter: {},
                 },
             );
         } catch (e) {
@@ -142,6 +175,39 @@
             return;
         } finally {
             sessionScores = resp.data;
+            document.dispatchEvent(new Event("sessionScoresUpdated"));
+        }
+    }
+
+    function calTimeFrameClicked(e) {
+        const action = e.target.dataset.action;
+        const scope = e.target.dataset.scope;
+
+        const now = new Date();
+        const year = now.getFullYear();
+
+        let days =
+            scope === "all"
+                ? Object.keys(sessions)
+                : Object.keys(sessions).filter(
+                      (day) => Number(day.split("/")[0]) === month + 1,
+                  );
+        let remove = action === "remove" ? true : false;
+
+        console.log(days, remove);
+
+        selectDays(days, remove);
+
+        updateSessionScores();
+    }
+
+    function selectDays(days, remove) {
+        if (!remove) message = "";
+        for (const day of days) {
+            sessions[day].active = !remove;
+            for (const session of sessions[day].sessions) {
+                session.active = !remove;
+            }
         }
     }
 </script>
@@ -170,7 +236,7 @@
                 <Right />
             </button>
         </div>
-        <div class="pad">
+        <div class="cal-display">
             <div class="rows">
                 {#each days as day}
                     <span class="date day">{day}</span>
@@ -194,30 +260,57 @@
                 {/each}
             </div>
             <div class="selection">
-                <button>Add all</button>
-                <button>Remove all</button>
-                <button>This month</button>
-                <button>3 Months</button>
-                <button>6 Months</button>
-                <button>Year</button>
+                <button
+                    onclick={calTimeFrameClicked}
+                    data-scope="all"
+                    data-action="add"
+                >
+                    Add All
+                </button>
+                <button
+                    onclick={calTimeFrameClicked}
+                    data-scope="all"
+                    data-action="remove"
+                >
+                    Remove All
+                </button>
+                <button
+                    onclick={calTimeFrameClicked}
+                    data-scope="month"
+                    data-action="add"
+                >
+                    Add Month
+                </button>
+                <button
+                    onclick={calTimeFrameClicked}
+                    data-scope="month"
+                    data-action="remove"
+                >
+                    Remove Month
+                </button>
             </div>
         </div>
     </div>
     <div class="sessions">
+        {#if message}
+            <div class="prompt">
+                <div>{message}</div>
+            </div>
+        {/if}
         <div class="grid">
             {#each Object.keys(sessions) as day}
                 {#if sessions[day].active}
                     {#each sessions[day].sessions as session (session.session_id)}
                         <SessionSelector
                             id={session.session_id}
+                            {day}
                             plays={session.plays}
-                            {updateSessionScores}
+                            bind:sessions
                         />
                     {/each}
                 {/if}
             {/each}
         </div>
-        <button onclick={updateSessionScores}>Get Sessions</button>
     </div>
 </div>
 
@@ -228,26 +321,23 @@
         border-radius: var(--radius);
         padding: 0.5rem;
         gap: 2rem;
+        height: 22rem;
     }
 
     .sessions {
+        position: relative;
         flex: 1;
-        background: var(--background-light);
+        background: var(--background-2);
         box-shadow: 0px 0px 15px rgba(0, 0, 0, 0.2);
         border-radius: var(--radius);
         gap: 1rem;
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
-        align-items: center;
         padding: 1rem;
+        overflow-y: scroll;
     }
 
     .sessions .grid {
         display: grid;
         grid-template-columns: 1fr 1fr;
-        height: min-content;
-        width: 100%;
         gap: 0.3rem;
     }
 
@@ -258,11 +348,13 @@
         gap: 0.5rem;
         box-shadow: 0px 0px 15px rgba(0, 0, 0, 0.2);
         border-radius: var(--radius);
-        background: var(--background-light);
+        background: var(--background-2);
     }
 
-    .pad {
+    .cal-display {
         padding: 0.5rem;
+        display: flex;
+        flex-direction: column;
     }
 
     .selection {
@@ -273,7 +365,7 @@
     .sessions button,
     .selection button {
         border: none;
-        background: var(--background-verylight);
+        background: var(--background-3);
         color: var(--foreground);
         border-radius: var(--radius);
         padding: 0.4rem;
@@ -287,6 +379,7 @@
         display: grid;
         grid-template-columns: repeat(7, 1fr);
         gap: 0.5rem;
+        flex: 1;
     }
 
     .date {
@@ -312,7 +405,7 @@
     }
 
     .date button {
-        height: 100%;
+        height: 2rem;
         aspect-ratio: 1;
         border: none;
         color: var(--foreground);
@@ -323,7 +416,7 @@
     }
 
     .date button:hover {
-        background: var(--background-verylight);
+        background: var(--background-3);
     }
 
     .date.has-sessions button {
@@ -331,7 +424,7 @@
         background-color: color-mix(
             in srgb,
             var(--hover) 10%,
-            var(--background-light)
+            var(--background-2)
         );
     }
 
@@ -346,7 +439,7 @@
         width: 100%;
         background: var(--foreground);
         border-radius: var(--radius) var(--radius) 0 0;
-        color: var(--background);
+        color: var(--background-0);
         margin-bottom: 1rem;
         padding: 0.3rem 0;
         height: min-content;
@@ -376,6 +469,16 @@
     :global(.month svg) {
         width: 0.5rem;
         height: 1rem;
+    }
+
+    .prompt {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        text-align: center;
+        color: var(--foreground);
+        font-weight: bold;
     }
 
     @media (max-width: 800px) {

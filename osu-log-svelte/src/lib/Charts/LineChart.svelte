@@ -22,17 +22,17 @@
         {
             type: "pp",
             name: "PP",
-            color: "#5C514FFF",
+            color: "#D22A62FF",
         },
         {
             type: "sr",
             name: "Stars",
-            color: "#996B60FF",
+            color: "#D29A2AFF",
         },
         {
             type: "bpm",
             name: "BPM",
-            color: "#c2c2c3FF",
+            color: "#2AD29AFF",
         },
         {
             type: "speed",
@@ -42,12 +42,17 @@
         {
             type: "aim",
             name: "Aim",
-            color: "#494040FF",
+            color: "#2A62D2FF",
         },
         {
             type: "acc",
             name: "Accuracy",
-            color: "#494040FF",
+            color: "#2AD246FF",
+        },
+        {
+            type: "pass",
+            name: "Pass",
+            color: "#2AD246FF",
         },
     ];
 
@@ -78,24 +83,17 @@
         acc: (score) => {
             return score.score.accuracy * 100;
         },
+        pass: (score) => {
+            return score.score.passed_percentage;
+        },
     };
 
     let yAxes = $state({});
-    let charts = $derived.by(() => {
+
+    const populateCharts = () => {
         const ret = {};
         for (const { type, name, color } of configs) {
-            const scores = sessionScores.scores;
-            const data = scores.map((score, index) => {
-                return {
-                    x: index,
-                    y: scoreMap[type](score),
-                    meta: {
-                        name: scoreMap["song"](score),
-                        id: score.score.id,
-                        date: score.score.started_at,
-                    },
-                };
-            });
+            const data = $state.snapshot(sessionScores.meta.graphData[type]);
             ret[name] = {
                 values: {
                     type: "scatter",
@@ -118,7 +116,9 @@
             };
         }
         return ret;
-    });
+    };
+
+    let charts = populateCharts();
 
     let datasets = [];
 
@@ -129,13 +129,11 @@
             ".line .toggle .switch input",
         );
 
-        const radioButtons = {};
+        const radioSelection = {};
         for (const { name } of configs) {
-            if (!radioButtons[name]) radioButtons[name] = [];
-            for (const radio of radios) {
-                const radioButton = document.getElementById(`${name}-${radio}`);
-                radioButtons[name].push(radioButton);
-            }
+            radioSelection[name] = document.querySelector(
+                `.${name}-radio:checked`,
+            );
         }
 
         for (const toggle of toggles) {
@@ -143,9 +141,7 @@
 
             const chartName = toggle.dataset.value;
             const chart = charts[chartName];
-            const selection = radioButtons[chartName].filter(
-                (radio) => radio.checked,
-            )[0];
+            const selection = radioSelection[chartName];
             const color = chart.values.borderColor;
 
             yAxes[chart.values.yAxisID] = {
@@ -162,15 +158,15 @@
                 return `${color.slice(0, 7)}${opacity}`;
             };
 
-            if (selection.id === `${chartName}-line`) {
+            if (selection.dataset.radio === "line") {
                 chart.values.borderColor = opacity(color, "FF");
                 chart.values.type = "line";
-            } else if (selection.id === `${chartName}-trend`) {
+            } else if (selection.dataset.radio === "trend") {
                 chart.values.borderColor = opacity(color, "22");
                 chart.values.backgroundColor = opacity(color, "00");
                 chart.values.type = "scatter";
                 datasets.push({ ...chart.average });
-            } else if (selection.id === `${chartName}-none`) {
+            } else if (selection.dataset.radio === "none") {
                 chart.values.borderColor = opacity(color, "FF");
                 chart.values.backgroundColor = opacity(color, "FF");
                 chart.values.type = "scatter";
@@ -193,7 +189,8 @@
         return ret;
     }
 
-    document.addEventListener("calButtonClicked", () => {
+    document.addEventListener("sessionScoresUpdated", () => {
+        charts = populateCharts();
         changeActiveDatasets();
     });
 
@@ -268,8 +265,8 @@
                                 })[0].color;
                                 return {
                                     backgroundColor: color,
-                                    borderColor: color
-                                }
+                                    borderColor: color,
+                                };
                             },
                             title: (ctx) => {
                                 return ctx[0].raw.meta.name;
@@ -278,6 +275,9 @@
                         filter: (ctx) => {
                             return !ctx.dataset.label.includes("Trend");
                         },
+                    },
+                    legend: {
+                        display: false,
                     },
                 },
             },
@@ -295,6 +295,8 @@
     }
 </script>
 
+{$inspect(sessionScores)}
+
 <!--HTML-->
 <div class="line">
     <div class="chart-container">
@@ -304,20 +306,26 @@
         {#each configs as { name, color }}
             <div class="toggle">
                 <div class="switch">
-                    <span style="color: {color};">{name}</span>
+                    <span>{name}</span>
                     {#if name === "PP"}
                         <Toggle
                             data={name}
                             callback={changeActiveDatasets}
                             checked="true"
+                            {color}
                         />
                     {:else}
-                        <Toggle data={name} callback={changeActiveDatasets} />
+                        <Toggle
+                            data={name}
+                            callback={changeActiveDatasets}
+                            {color}
+                        />
                     {/if}
                 </div>
                 <Radio
                     {name}
                     {radios}
+                    {color}
                     defaultIndex={1}
                     callback={changeActiveDatasets}
                 />

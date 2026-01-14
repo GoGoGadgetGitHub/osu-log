@@ -1,14 +1,15 @@
 <script>
     import Toggle from "$lib/UIComponents/Toggle.svelte";
     import { onDestroy, onMount } from "svelte";
-    let { id, plays, updateSessionScores } = $props();
+    let { id, plays, day, sessions = $bindable({}) } = $props();
 
-    onMount(async () => {
-        await updateSessionScores();
-    });
-    onDestroy(async () => {
-        await updateSessionScores();
-    });
+    const updateSession = (e) => {
+        const checkbox = e.target;
+        let session = sessions[day].sessions.filter(
+            (session) => session.session_id === id,
+        )[0];
+        session.active = checkbox.checked;
+    };
 </script>
 
 <label class="session-selector-label">
@@ -19,13 +20,19 @@
         {plays}
         <strong>Scores</strong>
     </span>
-    <Toggle cls="session-selector" data={id} checked="true" />
+    <Toggle
+        color="var(--hover)"
+        callback={updateSession}
+        cls="session-selector"
+        data={id}
+        checked="true"
+    />
 </label>
 
 <style>
     .session-selector-label:nth-child(4n-3),
     .session-selector-label:nth-child(4n) {
-        background: var(--background-verylight);
+        background: var(--background-3);
     }
 
     .session-selector-label {
@@ -34,6 +41,7 @@
         padding: 0.5rem;
         border-radius: var(--radius);
         animation: fadeIn 0.45s ease-out forwards;
+        height: max-content;
     }
 
     :global(.id + input:checked) {

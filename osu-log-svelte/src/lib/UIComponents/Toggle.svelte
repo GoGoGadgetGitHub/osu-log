@@ -1,17 +1,48 @@
 <script>
-    let { cls, id, data, callback, checked } = $props();
+    import { fade } from "svelte/transition";
+    let {
+        cls,
+        id,
+        data,
+        callback,
+        checked = $bindable(false),
+        color,
+        tooltip,
+    } = $props();
+
+    let showTooltip = $state(false);
+
+    function mouseOver(e) {
+        showTooltip = true;
+    }
+
+    function mouseLeave(e) {
+        showTooltip = false;
+    }
 </script>
 
-<label class="switch" for={id}>
+<label
+    class="switch"
+    onmouseover={mouseOver}
+    onmouseleave={mouseLeave}
+    onfocus={mouseOver}
+    for={id}
+>
+    {#if showTooltip && tooltip}
+        <div in:fade={{ duration: 200 }} class="tooltip">
+            {tooltip}
+        </div>
+    {/if}
+    <div rol="tooltip"></div>
     <input
         class={cls}
         {id}
         type="checkbox"
         data-value={data}
         onclick={callback}
-        {checked}
+        bind:checked
     />
-    <div class="slider round"></div>
+    <div style="--color: {color}" class="slider round"></div>
 </label>
 
 <style>
@@ -28,7 +59,7 @@
 
     .slider {
         border-radius: 20px;
-        background: var(--background-verylight);
+        background: var(--background-3);
         position: absolute;
         cursor: pointer;
         bottom: 0;
@@ -52,8 +83,22 @@
         transition: 0.25s;
     }
 
+    .tooltip {
+        position: absolute;
+        bottom: 105%;
+        left: 50%;
+        translate: -50% 0;
+        background: var(--background-2);
+        width: max-content;
+        border-radius: 5px;
+        padding: 0.3rem;
+        color: var(--foreground);
+        font-size: 0.9rem;
+        pointer-events: none;
+    }
+
     input:checked + .slider {
-        background: var(--hover);
+        background: var(--color);
     }
 
     input:checked + .slider::before {

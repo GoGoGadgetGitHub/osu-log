@@ -1,10 +1,19 @@
-Table:
-	Add pagination
-
 Session Summary:
 	Fix Play time
 
-Fix change user not updating session controls
+Filter:
+	Filter by beatmap
+	Filter by song name
+	Filter by mods
+	Filter by acc
+	Filter by pp
+	Filter by grade
+	Filter by passed
+	
+	Filter on database query (do it all in sql)
+
+Scores Table:
+	Add failed indicator and percentage
 
 Add more stats to profile component use bathbot as refrence
 

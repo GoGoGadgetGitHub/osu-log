@@ -1,13 +1,5 @@
 <script>
-	import A from "$lib/Svg/A.svelte";
-	import B from "$lib/Svg/B.svelte";
-	import C from "$lib/Svg/C.svelte";
-	import D from "$lib/Svg/D.svelte";
-	import F from "$lib/Svg/F.svelte";
-	import S from "$lib/Svg/S.svelte";
-	import Sh from "$lib/Svg/SH.svelte";
-	import Xh from "$lib/Svg/XH.svelte";
-	import X from "$lib/Svg/X.svelte";
+	import { A, B, C, D, F, S, X, Sh, Xh } from "$lib";
 	import Star from "$lib/Svg/Star.svelte";
 	import { fade, slide } from "svelte/transition";
 
@@ -32,14 +24,26 @@
 		set: { active: false, order: NO_ORDER },
 	});
 
+	let dateFormatter = new Intl.DateTimeFormat("en-US", {
+		month: "short",
+		day: "numeric",
+		hour: "numeric",
+		minute: "numeric",
+	});
+
 	let { sessionScores, changeSession, loading } = $props();
 	let gradeIcons = { X, XH: Xh, S, SH: Sh, A, B, C, D, F };
-
 	let index = $state(0);
 	const paginationWidth = 100;
+
 	let paginate = $derived(
-		sessionScores.scores.length > paginationWidth ? true : false,
+		sessionScores.scores
+			? sessionScores.scores.length > paginationWidth
+				? true
+				: false
+			: false,
 	);
+
 	let paginationStartIndex = $derived(paginationWidth * index);
 
 	let displayedScores = $derived.by(() => {
@@ -75,13 +79,6 @@
 		}
 
 		return ret;
-	});
-
-	let dateFormatter = new Intl.DateTimeFormat("en-US", {
-		month: "short",
-		day: "numeric",
-		hour: "numeric",
-		minute: "numeric",
 	});
 
 	async function loadImage(src) {
@@ -171,7 +168,7 @@
 {#snippet tableRow(score, performance)}
 	<tr
 		in:fade
-		style="background: center / contain no-repeat linear-gradient(to right, var(--background-rgba0), var(--background-rgba1) 95%), url({score
+		style="background: center / contain no-repeat linear-gradient(to right, var(--background-1-rgba0), var(--background-1-rgba1) 95%), url({score
 			.beatmapset.covers.slimcover})"
 		id={`score-${score.id}`}
 	>
@@ -251,6 +248,12 @@
 				{/each}
 			</tr>
 		</thead>
+
+		{#if !sessionScores.scores}
+			<caption>
+				No Scores!<br />Click on one of the highlighted dates on the calendar
+			</caption>
+		{/if}
 
 		<tbody>
 			{#each displayedScores as { score, performance }, index}

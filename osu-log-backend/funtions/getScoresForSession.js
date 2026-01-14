@@ -2,20 +2,12 @@ const { db, dbQuery } = require("../database.js");
 const { getSessionStats } = require("./generateStats.js");
 const err = require("../errors.js");
 
-async function getScoresForSession(osu_user_id, sessionID) {
+async function getScoresForSession(osu_user_id, sessionID, filter) {
   console.log(`Getting Scores for session ${sessionID}`);
-
-  if (sessionID === "latest") {
-    try {
-      sessionID = await getLatestSessionID(osu_user_id) ?? 0;
-    } catch (e) {
-      throw e;
-    }
-  }
 
   let scores;
   try {
-    scores = await getSession(sessionID, osu_user_id);
+    scores = await getSession(sessionID, osu_user_id, filter);
   } catch (e) {
     throw e;
   }
@@ -27,11 +19,6 @@ async function getScoresForSession(osu_user_id, sessionID) {
   const start = scores[0].score.ended_at;
   const end = scores[scores.length - 1].score.ended_at;
 
-  const difference = new Date(end) - new Date(start);
-  const hours = Math.floor(difference / (1000 * 60 * 60));
-  const minutes = Math.floor((difference / (1000 * 60)) % 60);
-  const duration = `${hours} hours ${minutes} minutes`;
-
   let sessionStats;
   try {
     sessionStats = await getSessionStats(osu_user_id, sessionID);
@@ -42,7 +29,7 @@ async function getScoresForSession(osu_user_id, sessionID) {
   const session = {
     scores,
     meta: {
-      time: { start, end, duration },
+      time: { start, end },
       id: sessionID,
       stats: {
         ...sessionStats,
@@ -52,30 +39,32 @@ async function getScoresForSession(osu_user_id, sessionID) {
   return session;
 }
 
-async function getScoresForSessionEndpoint(req, res) {
-  const osu_user_id = req.params.userID;
-  const sessionID = req.params.sessionID;
+async function getSession(sessionID, osu_user_id, filter) {
+  let query =
+    "select score, performance, session_id from scores where session_id = $1 and osu_user_id like $2 ";
+  query = applyFilter(query, filter);
+  query += "order by set_at";
 
-  let sessionScores;
-  try {
-    sessionScores = await getScoresForSession(osu_user_id, sessionID);
-  } catch (e) {
-    res.status(500).json(e);
-    return;
-  }
+  const { beatmapID, name, mods, acc, pp, ranks } = filter;
 
-  res.status(200).json(sessionScores);
-}
+  const add = (value, isArray = false) => {
+    return isArray ? value ? [...value] : [] : value ? [value] : [];
+  };
 
-async function getSession(sessionID, osu_user_id) {
-  const query =
-    "select score, performance, session_id from scores where session_id = $1 and osu_user_id like $2 order by set_at";
+  const params = [
+    sessionID,
+    `${osu_user_id}`,
+    ...add(beatmapID),
+    ...add(name),
+    ...add(mods?.array, true),
+    ...add(acc?.value),
+    ...add(pp?.value),
+    ...add(ranks),
+  ];
+
   let scores;
   try {
-    scores = await dbQuery(query, db.manyOrNone, [
-      sessionID,
-      `${osu_user_id}`,
-    ]);
+    scores = await dbQuery(query, db.manyOrNone, params);
   } catch (e) {
     console.log("Error while trying to fetch scores for session from db...");
     throw e;
@@ -84,20 +73,90 @@ async function getSession(sessionID, osu_user_id) {
   return scores;
 }
 
-async function getLatestSessionID(osu_user_id) {
-  const query =
-    "select session_id from scores where osu_user_id like $1 order by set_at desc limit 1";
-  let sessionID;
-  try {
-    sessionID = await dbQuery(query, db.oneOrNone, [`${osu_user_id}`]);
-  } catch (e) {
-    console.error("Error while trying to get the latest session id...");
-    throw e;
+function applyFilter(query, filter) {
+  const { beatmapID, name, mods, acc, pp, ranks, fails } = filter;
+
+  let filterIndex = 3;
+
+  if (beatmapID) {
+    query += `and score->'beatmap'->>'id' like '$${filterIndex}' `;
+    filterIndex++;
   }
-  return sessionID ? Number(sessionID.session_id) : 0;
+
+  if (name) {
+    query += `and score->'beatmapset'->>'title' like '%$${filterIndex}:raw%' `;
+    filterIndex++;
+  }
+
+  if (mods?.array.length > 0) {
+    if (mods.array[0] === "NM") {
+      query +=
+        `and (jsonb_array_length(score->'mods') = 0 or (jsonb_array_length(score->'mods') = 1 and score->'mods'->0->>'acronym' like 'CL')) `;
+    } else {
+      query += "and score->'mods' @@ '";
+      mods.array.forEach((_, i) => {
+        if (i === mods.array.length - 1) {
+          query += `exists($[*] ? (@.acronym == "$${filterIndex}:raw"))' `;
+        } else {
+          query += `exists($[*] ? (@.acronym == "$${filterIndex}:raw")) && `;
+        }
+        filterIndex++;
+      });
+
+      if (mods.exclusive) {
+        query +=
+          `and jsonb_array_length(score->'mods') = ${mods.array.length} `;
+      }
+    }
+  }
+
+  if (acc?.value) {
+    query = numericFilter(
+      acc.opperator,
+      "and (score->>'accuracy')::float",
+      query,
+      filterIndex,
+    );
+    filterIndex++;
+  }
+
+  if (pp?.value) {
+    query = numericFilter(
+      pp.opperator,
+      "and (performance->'perf'->>'pp')::float",
+      query,
+      filterIndex,
+    );
+    filterIndex++;
+  }
+
+  if (ranks?.length > 0) {
+    query += `and array_position($${filterIndex}, score->>'rank') is not null `;
+  }
+
+  if (fails === false) {
+    query += `and (score->>'passed')::boolean `;
+  }
+
+  return query;
+}
+
+function numericFilter(opperator, expression, query, filterIndex) {
+  switch (opperator) {
+    case ">":
+      query += `${expression} >= $${filterIndex} `;
+      break;
+    case "<":
+      query += `${expression} <= $${filterIndex} `;
+      break;
+    case "=":
+      query += `${expression} = $${filterIndex} `;
+      break;
+  }
+
+  return query;
 }
 
 module.exports = {
-  getScoresForSessionEndpoint,
   getScoresForSession,
 };

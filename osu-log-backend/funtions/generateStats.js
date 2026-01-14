@@ -79,13 +79,14 @@ async function generateStatsForSession(sessionID, osu_user_id) {
     minMaxAcc,
     avgBpm,
     minMaxBpm,
-    gradeCounts,
-    failsPasses,
-    sessionTime,
     avgOD,
     minMaxOD,
     avgAR,
-    minMaxAR;
+    minMaxAR,
+    gradeCounts,
+    failsPasses,
+    sessionTime,
+    playtime;
   try {
     options.field = "performance->'perf'->>'pp'";
     avgPP = await getAverage(options);
@@ -122,6 +123,11 @@ async function generateStatsForSession(sessionID, osu_user_id) {
       db.one,
       [osu_user_id, sessionID],
     );
+    playtime = await dbQuery(
+      "select sum((score->>'passed_length')::integer) from scores where osu_user_id like '$1' and session_id = $2",
+      db.one,
+      [osu_user_id, sessionID],
+    );
   } catch (e) {
     throw e;
   }
@@ -136,6 +142,7 @@ async function generateStatsForSession(sessionID, osu_user_id) {
     od: { avg: toOD(avgOD), min: toOD(minMaxOD.max), max: toOD(minMaxOD.min) },
     ar: { avg: avgAR, ...minMaxAR },
     gradeCounts,
+    playtime: Number(playtime.sum),
   };
 
   try {

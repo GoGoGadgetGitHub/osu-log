@@ -12,7 +12,7 @@
 
     let gradeIcons = { X, XH: Xh, S, SH: Sh, A, B, C, D };
     let { sessionScores } = $props();
-    let { sr, acc, bpm, pp, passes, fails, plays } = $derived(
+    let { sr, acc, bpm, pp, passes, fails, plays, playtime } = $derived(
         sessionScores.meta.stats,
     );
     const { topStats, bottomStats } = $derived({
@@ -23,7 +23,7 @@
             { name: "PP", stat: pp.avg },
         ],
         bottomStats: [
-            { name: "Play Time", stat: sessionScores.meta.time.duration },
+            { name: "Playtime", stat: formatSeconds(playtime) },
             { name: "Passes", stat: passes },
             { name: "Fails", stat: fails },
             { name: "Plays", stat: plays },
@@ -32,41 +32,61 @@
 
     let grades = $derived(sessionScores.meta.stats.gradeCounts);
 
-    let { duration } = $derived(sessionScores.meta.time);
+    function formatSeconds(totalSeconds) {
+        totalSeconds = Math.floor(totalSeconds);
+
+        const hours = Math.floor(totalSeconds / 3600);
+        totalSeconds %= 3600;
+
+        const minutes = Math.floor(totalSeconds / 60);
+        const seconds = totalSeconds % 60;
+
+        const parts = [];
+
+        if (hours) parts.push(hours < 10 ? `0${hours}` : `${hours}`);
+        else parts.push("00");
+        if (minutes) parts.push(minutes < 10 ? `0${minutes}` : `${minutes}`);
+        else parts.push("00");
+        if (seconds || parts.length === 0) parts.push(`${seconds}`);
+
+        return parts.join(":");
+    }
 </script>
 
 <div class="container">
-    <h2>Session Summary</h2>
-    <div class="stats">
-        {#each topStats as { name, stat }}
-            <span class="stat">
-                <span>{name}</span>
-                <span class={name.toLowerCase()}>{stat.toFixed(2)}</span>
-            </span>
-        {/each}
-    </div>
-    <div class="stats">
-        {#each bottomStats as { name, stat }}
-            <span class="stat">
-                <span>{name}</span>
-                <span class={name.toLowerCase()}>{stat}</span>
-            </span>
-        {/each}
-    </div>
-    <div class="grades">
-        {#each grades as { grade, count }}
-            {#if count > 0}
-                <span class="grade">
-                    <span>
-                        <svelte:component
-                            this={gradeIcons[grade.toUpperCase()]}
-                        />
-                    </span>
-                    <span>{count}</span>
+    {#if sessionScores.meta}
+        <h2>Session Summary</h2>
+        <div class="stats">
+            {#each topStats as { name, stat }}
+                <span class="stat">
+                    <span>{name}</span>
+                    <span class={name.toLowerCase()}>{stat.toFixed(2)}</span>
                 </span>
-            {/if}
-        {/each}
-    </div>
+            {/each}
+        </div>
+        <div class="stats">
+            {#each bottomStats as { name, stat }}
+                <span class="stat">
+                    <span>{name}</span>
+                    <span class={name.toLowerCase()}>{stat}</span>
+                </span>
+            {/each}
+        </div>
+        <div class="grades">
+            {#each grades as { grade, count }}
+                {#if count > 0}
+                    <span class="grade">
+                        <span>
+                            <svelte:component
+                                this={gradeIcons[grade.toUpperCase()]}
+                            />
+                        </span>
+                        <span>{count}</span>
+                    </span>
+                {/if}
+            {/each}
+        </div>
+    {/if}
 </div>
 
 <style>

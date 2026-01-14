@@ -5,35 +5,93 @@
     import LargeLoader from "$lib/UIComponents/Loaders/LargeLoader.svelte";
     import SessionGroup from "$lib/SessionGroup.svelte";
 
-    import { slide } from "svelte/transition";
+    import { slide, fade } from "svelte/transition";
     import axios from "axios";
+    import Logo from "$lib/Svg/Logo.svelte";
 
     let userData = $state("");
     let loading = $state(false);
     let error = $state("");
+    let initial = $state(true);
 </script>
 
-<div class="main">
-    <!-- <a href onclick={changeSession}>Test</a> -->
-    <Username bind:userData {error} {loading} />
-    {#if loading && !userData}
-        <LargeLoader />
-    {:else if userData && !error}
+<button
+    onclick={async () => {
+        let resp;
+        try {
+            resp = await axios.post(
+                `http://localhost:3000/get-combined-session/${userData.id}/`,
+                {
+                    sessions: [0],
+                    filter: {
+                        fails: false,
+                    },
+                },
+            );
+        } catch (e) {
+            console.log(e);
+            return;
+        } finally {
+            console.log(resp.data);
+        }
+    }}>Test</button
+>
+
+{#if initial}
+    <div transition:fade class="initial">
+        <div class="logo">
+            <Logo />
+        </div>
+        <Username bind:userData bind:initial {error} bind:loading />
+    </div>
+{/if}
+
+{#if loading && !userData}
+    <LargeLoader />
+{/if}
+
+{#if !initial && !loading && userData}
+    <div class="logo small">
+        <Logo />
+    </div>
+    <div transition:slide class="main">
+        <Username bind:userData bind:initial {error} {loading} />
         <div class="profile-and-session">
             <Profile {userData} />
         </div>
         <SessionGroup {userData} {error} {loading} />
-    {/if}
-</div>
+    </div>
+{/if}
 
 <style>
-    @import "../css/global.css";
+    @import "src/css/global.css";
 
     .main {
         max-width: 1000px;
         margin: auto;
         display: grid;
         row-gap: 1rem;
+        background: var(--background-1);
+        border-radius: var(--radius);
+        padding: 1rem;
+    }
+
+    .initial {
+        background: unset;
+        position: absolute;
+        top: 50vh;
+        left: 50vw;
+        translate: -50% -50%;
+    }
+
+    .logo {
+        display: flex;
+        justify-content: center;
+        width: max-cotent;
+    }
+
+    :global(.logo.small svg) {
+        height: 2rem;
     }
 
     @media (max-width: 800px) {

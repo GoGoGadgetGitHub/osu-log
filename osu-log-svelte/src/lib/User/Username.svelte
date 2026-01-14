@@ -1,10 +1,19 @@
 <script>
 	import axios from "axios";
+	import { goto } from "$app/navigation";
 
-	let { userData = $bindable(""), error, loading } = $props();
+	let {
+		userData = $bindable(""),
+		initial = $bindable(true),
+		loading = $bindable(false),
+		error,
+		redirect,
+	} = $props();
+
 	let value = $state();
 
 	async function getUserData() {
+		initial = false;
 		let resp;
 		try {
 			loading = true;
@@ -14,6 +23,7 @@
 			error = `Could not fetch user data for ${value}`;
 		} finally {
 			userData = resp.data;
+			loading = false;
 		}
 	}
 </script>

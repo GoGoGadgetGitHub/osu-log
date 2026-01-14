@@ -103,7 +103,8 @@
 		text-align: center;
 		transition: 0.2s ease-in-out;
 		text-decoration: none;
-		background: var(--background-light);
+		background: var(--background-2);
+		box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.2);
 		border: none;
 		height: 30px;
 		width: 30px;

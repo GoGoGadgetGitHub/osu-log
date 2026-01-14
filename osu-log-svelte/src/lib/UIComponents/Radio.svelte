@@ -1,24 +1,28 @@
 <script>
-    let { name, radios, callback, defaultIndex } = $props();
+    let { name, radios, color, callback, defaultIndex } = $props();
 </script>
 
-<div class="radio">
+<div style="--color: {color}" class="radio">
     {#each radios as radio, i}
         <label for="{name}-{radio}">
             {#if i === defaultIndex}
                 <input
                     id="{name}-{radio}"
+                    class="{name}-radio"
                     type="radio"
                     {name}
                     onclick={callback}
                     checked="true"
+                    data-radio={radio}
                 />
             {:else}
                 <input
                     id="{name}-{radio}"
+                    class="{name}-radio"
                     type="radio"
                     {name}
                     onclick={callback}
+                    data-radio={radio}
                 />
             {/if}
             <span>{radio}</span>
@@ -49,11 +53,11 @@
     }
 
     .radio input[type="radio"]:checked + span {
-        box-shadow: 0 0 0 2px var(--hover);
+        box-shadow: 0 0 0 2px var(--color);
         background-color: color-mix(
             in srgb,
-            var(--hover) 10%,
-            var(--background-light)
+            var(--color) 10%,
+            var(--background-2)
         );
         z-index: 1;
         color: var(--foreground);
@@ -62,7 +66,7 @@
     .radio label span {
         display: block;
         cursor: pointer;
-        background-color: var(--background-light);
+        background-color: var(--background-2);
         padding: 0.3em;
         position: relative;
         margin-left: 0.0625em;

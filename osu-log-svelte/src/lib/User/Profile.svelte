@@ -74,7 +74,7 @@
 
 	.profile-img img {
 		position: relative;
-		z-index: -1;
+		z-index: 1;
 		filter: brightness(100%);
 		width: 100%;
 		transition: var(--transition);
@@ -106,7 +106,7 @@
 		left: 50%;
 		translate: -50% -50%;
 		color: var(--foreground);
-		z-index: 0;
+		z-index: 2;
 		transition: var(--transition);
 	}
 </style>

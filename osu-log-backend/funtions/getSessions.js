@@ -43,6 +43,7 @@ async function getSessions(osu_user_id) {
     result[session.set_at].sessions.push({
       session_id: session.session_id,
       plays: session.plays,
+      active: false,
     });
   }
 
@@ -55,7 +56,7 @@ async function getPlayCountPerSession(osu_user_id) {
 
   let result;
   try {
-    result = await dbQuery(query, db.many, [osu_user_id]);
+    result = await dbQuery(query, db.manyOrNone, [osu_user_id]);
   } catch (e) {
     console.error("Error when fetching play count for sessions...");
     throw e;
