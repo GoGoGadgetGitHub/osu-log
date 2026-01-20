@@ -53,8 +53,10 @@ caption {
 	font-weight: bold;
 }
 
-:global(th svg) {
-	fill: var(--background);
+th svg {
+	fill: var(--background-0);
+	width: 1.3rem;
+	height: 1.3rem;
 }
 
 /* ===== TABLE ROWS ===== */

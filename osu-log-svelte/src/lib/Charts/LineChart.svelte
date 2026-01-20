@@ -4,7 +4,6 @@
     import "chartjs-adapter-date-fns";
     import { linear } from "svelte/easing";
     import { generateRegressionLine } from "./polynomial-reg.js";
-    import Gear from "$lib/Svg/Gear.svelte";
     import Radio from "$lib/UIComponents/Radio.svelte";
     import Toggle from "$lib/UIComponents/Toggle.svelte";
     import { writable } from "svelte/store";
@@ -294,8 +293,6 @@
         };
     }
 </script>
-
-{$inspect(sessionScores)}
 
 <!--HTML-->
 <div class="line">

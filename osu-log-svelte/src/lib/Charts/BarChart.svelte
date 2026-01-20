@@ -4,7 +4,6 @@
     import Star from "$lib/Svg/Star.svelte";
     import ScoresTable from "$lib/ScoresTable/ScoresTable.svelte";
     import { onMount } from "svelte";
-    import Gear from "$lib/Svg/Gear.svelte";
 
     onMount(() => {
         changeActiveDatasets();

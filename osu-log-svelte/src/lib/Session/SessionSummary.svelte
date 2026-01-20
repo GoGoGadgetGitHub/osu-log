@@ -1,14 +1,7 @@
 <script>
     import { derived } from "svelte/store";
-    import A from "$lib/Svg/A.svelte";
-    import B from "$lib/Svg/B.svelte";
-    import C from "$lib/Svg/C.svelte";
-    import D from "$lib/Svg/D.svelte";
-    import S from "$lib/Svg/S.svelte";
-    import Sh from "$lib/Svg/SH.svelte";
-    import X from "$lib/Svg/X.svelte";
-    import Xh from "$lib/Svg/XH.svelte";
-    import { each } from "chart.js/helpers";
+
+    import { A, B, C, D, F, S, X, Sh, Xh } from "$lib";
 
     let gradeIcons = { X, XH: Xh, S, SH: Sh, A, B, C, D };
     let { sessionScores } = $props();

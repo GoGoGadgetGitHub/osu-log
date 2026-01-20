@@ -1,19 +1,14 @@
-Session Summary:
-	Fix Play time
-
 Filter:
-	Filter by beatmap
-	Filter by song name
-	Filter by mods
-	Filter by acc
-	Filter by pp
-	Filter by grade
-	Filter by passed
-	
-	Filter on database query (do it all in sql)
+	Filter by stars
 
 Scores Table:
 	Add failed indicator and percentage
+
+UI:
+	Work on UI flow and user feedback
+
+Graph:
+	Fix line graph not filling graph area bug
 
 Add more stats to profile component use bathbot as refrence
 

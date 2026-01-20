@@ -4,9 +4,11 @@
     import RankFilter from "$lib/Filter/RankFilter.svelte";
     import Radio from "$lib/UIComponents/Radio.svelte";
     import Toggle from "$lib/UIComponents/Toggle.svelte";
-    import { boolean } from "mathjs";
+    import Clock from "$lib/Svg/Clock.svelte";
+    import Star from "$lib/Svg/Star.svelte";
+    import { boolean, im } from "mathjs";
 
-    let { filter = $bindable() } = $props();
+    let { filter = $bindable(), filterChange = $bindable(false) } = $props();
 
     let beatmapID = $state("");
     let name = $state("");
@@ -16,12 +18,15 @@
     let ppMax = $state(0);
     let accMin = $state(0);
     let accMax = $state(100);
+    let srMin = $state(0);
+    let srMax = $state(0);
+    let tMin = $state(0);
+    let tMax = $state(0);
     let lazer = $state(false);
     let ranks = $state([]);
     let fails = $state(true);
 
-    document.addEventListener("filterupdate", updateFilter);
-    function updateFilter() {
+    $effect.pre(() => {
         filter = {
             beatmapID,
             name,
@@ -30,20 +35,51 @@
                 exclusive,
             },
             acc: {
-                max: accMax,
-                min: accMin,
+                min: accMin ?? 0,
+                max: accMax === 100 ? 0 : accMax,
             },
             pp: {
-                max: ppMax,
-                min: ppMin,
+                min: ppMin ?? 0,
+                max: ppMax ?? 0,
+            },
+            stars: {
+                min: srMin ?? 0,
+                max: srMax ?? 0,
+            },
+            time: {
+                min: tMin ?? 0,
+                max: tMax ?? 0,
             },
             ranks,
             fails,
         };
+    });
+
+    function resetFilter(e) {
+        e.preventDefault();
+        beatmapID = "";
+        name = "";
+        mods = [];
+        exclusive = false;
+        ppMin = 0;
+        ppMax = 0;
+        accMin = 0;
+        accMax = 100;
+        srMin = 0;
+        srMax = 0;
+        tMin = 0;
+        tMax = 0;
+        lazer = false;
+        ranks = [];
+        fails = true;
+        filterChange = !filterChange;
+    }
+
+    function applyFilter(e) {
+        e.preventDefault();
+        filterChange = !filterChange;
     }
 </script>
-
-{$inspect(filter)}
 
 <form>
     <div class="filters">
@@ -65,83 +101,57 @@
                     type="number"
                     placeholder="Search by id..."
                     bind:value={beatmapID}
-                    oninput={updateFilter}
                 />
             </label>
         </div>
 
-        <ModFilter {exclusive} bind:lazer bind:mods />
+        <ModFilter bind:exclusive bind:lazer bind:mods />
 
         <RankFilter bind:ranks />
 
-        <div class="acc-pp-fail">
-            <div class="acc-filter">
-                <label for="accmin">
-                    <span>min</span>
-                    <input
-                        id="accmin"
-                        class="min"
-                        type="number"
-                        bind:value={accMin}
-                        min="0"
-                        max={accMax}
-                        oninput={updateFilter}
-                    />
-                </label>
-                <span>Acc</span>
-                <label for="accmax">
-                    <span>max</span>
-                    <input
-                        id="accmax"
-                        class="max"
-                        type="number"
-                        bind:value={accMax}
-                        min={accMin}
-                        max="100"
-                        oninput={updateFilter}
-                    />
-                </label>
-            </div>
-            <div class="pp-filter">
-                <label for="ppmin">
-                    <span>min</span>
-                    <input
-                        id="ppmin"
-                        class="min"
-                        type="number"
-                        bind:value={ppMin}
-                        min="0"
-                        max={ppMax}
-                        oninput={updateFilter}
-                    />
-                </label>
-                <span>PP</span>
-                <label for="ppmax">
-                    <span>max</span>
-                    <input
-                        id="ppmax"
-                        class="max"
-                        type="number"
-                        bind:value={ppMax}
-                        min={ppMin}
-                        oninput={updateFilter}
-                    />
-                </label>
-            </div>
-            <div class="fail-toggle">
-                <span>Fails</span>
-                <Toggle
-                    color="var(--hover)"
-                    tooltip="Include fails"
-                    bind:checked={fails}
-                    callback={updateFilter}
-                />
-            </div>
+        <div class="numeric">
+            <MinMaxInput
+                bind:max={accMax}
+                bind:min={accMin}
+                maxVal="100"
+                text="%"
+                tooltip="Accuracy"
+            />
+
+            <MinMaxInput
+                bind:max={ppMax}
+                bind:min={ppMin}
+                text="PP"
+                tooltip="Performance"
+            />
+
+            <MinMaxInput
+                bind:max={srMax}
+                bind:min={srMin}
+                icon={Star}
+                text="Stars"
+                tooltip="Star Rating"
+            />
+
+            <MinMaxInput
+                bind:max={tMax}
+                bind:min={tMin}
+                icon={Clock}
+                tooltip="Lenth in seconds"
+            />
+        </div>
+        <div class="fail-toggle">
+            <span>Fails</span>
+            <Toggle
+                color="var(--hover)"
+                tooltip="Include fails"
+                bind:checked={fails}
+            />
         </div>
     </div>
     <div class="buttons">
-        <button type="submit">Apply Filter</button>
-        <button>Clear Filter</button>
+        <button type="submit" onclick={applyFilter}>Apply Filter</button>
+        <button onclick={resetFilter}>Clear Filter</button>
     </div>
 </form>
 
@@ -160,34 +170,6 @@
         justify-content: center;
         margin-bottom: 2rem;
         color: var(--foreground);
-    }
-
-    .pp-filter,
-    .acc-filter {
-        font-weight: bold;
-        display: flex;
-        width: max-content;
-        align-items: center;
-        gap: 1rem;
-    }
-
-    .acc-filter label,
-    .pp-filter label {
-        position: relative;
-    }
-
-    .acc-filter label span,
-    .pp-filter label span {
-        position: absolute;
-        bottom: 100%;
-        left: 50%;
-        translate: -50% 0;
-        font-size: 0.8rem;
-    }
-
-    #ppmax,
-    #ppmin {
-        width: 4rem;
     }
 
     .title-id {
@@ -209,6 +191,7 @@
         display: flex;
         justify-content: center;
         gap: 1rem;
+        width: 100%;
     }
 
     .buttons {
@@ -218,10 +201,12 @@
         gap: 1rem;
     }
 
-    .acc-pp-fail {
+    .numeric {
         margin-top: 0.8rem;
         display: flex;
         align-items: center;
+        justify-content: center;
+        flex-wrap: wrap;
         gap: 1rem;
     }
 

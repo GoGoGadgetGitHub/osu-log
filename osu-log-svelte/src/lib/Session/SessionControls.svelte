@@ -1,5 +1,4 @@
 <script>
-    import Gear from "$lib/Svg/Gear.svelte";
     import Left from "$lib/Svg/Left.svelte";
     import Right from "$lib/Svg/Right.svelte";
     import axios from "axios";
@@ -9,6 +8,7 @@
     import { fade, slide } from "svelte/transition";
     import { flip } from "svelte/animate";
     import Radio from "$lib/UIComponents/Radio.svelte";
+    import SessionFilter from "$lib/Filter/SessionFilter.svelte";
 
     const days = ["S", "M", "T", "W", "T", "F", "S"];
     const months = [
@@ -36,19 +36,82 @@
 
     let month = $state(new Date().getMonth());
     let year = $state(new Date().getFullYear());
-    let sessions = $state([]);
+    let filter = $state({});
+    let filterChange = $state(false);
     let message = $state(
         "Click on one of the highlighted dates on the calender",
     );
 
     onMount(getSessions);
 
-    $effect(() => {
-        getSessions();
+    let sessions = $derived.by(getSessions);
+
+    let localScores = $derived.by(async () => {
+        const sessionList = [];
+
+        for (const day of Object.keys(sessions)) {
+            for (const session of sessions[day].sessions) {
+                if (session.active) {
+                    sessionList.push(session.session_id);
+                }
+            }
+        }
+
+        let resp;
+        try {
+            resp = await axios.post(
+                `http://localhost:3000/get-combined-session/${userData.id}/`,
+                {
+                    sessions: sessionList,
+                    filter,
+                },
+            );
+        } catch (e) {
+            console.log(e);
+            return {};
+        } finally {
+            document.dispatchEvent(new Event("sessionScoresUpdated"));
+            return resp.data;
+        }
     });
 
+    /*
+    async function updateSessionScores() {
+        const sessionList = [];
+
+        for (const day of Object.keys(sessions)) {
+            for (const session of sessions[day].sessions) {
+                if (session.active) {
+                    sessionList.push(session.session_id);
+                }
+            }
+        }
+
+        if (sessionList.length === 0) {
+            sessionScores = {};
+            return;
+        }
+
+        let resp;
+        try {
+            resp = await axios.post(
+                `http://localhost:3000/get-combined-session/${userData.id}/`,
+                {
+                    sessions: sessionList,
+                    filter,
+                },
+            );
+        } catch (e) {
+            console.log(e);
+            return;
+        } finally {
+            sessionScores = resp.data;
+            document.dispatchEvent(new Event("sessionScoresUpdated"));
+        }
+    }
+    */
+
     async function getSessions() {
-        message = "Click on one of the highlighted dates on the calender";
         let resp;
         try {
             resp = await axios.get(
@@ -57,16 +120,8 @@
         } catch (e) {
             console.log(e);
         } finally {
-            sessions = resp.data;
+            return resp.data;
         }
-
-        if (Object.keys(sessions).length === 0) {
-            message =
-                "No sessions have been logged, and you havn't played in a while... (washed)";
-        }
-
-        updateSessionScores();
-        sessionScores = {};
     }
 
     let dateNumbers = $derived.by(() => {
@@ -125,6 +180,8 @@
     }
 
     async function calButtonClicked(e) {
+        sessions = Promise.resolve(sessions);
+        console.log(sessions);
         const dataset = e.target.dataset;
         const day = `${Number(dataset.month) + 1}/${dataset.day}/${year}`;
 
@@ -141,41 +198,6 @@
                 (session) => (session.active = true),
             );
             e.target.parentElement.classList.add("selected");
-        }
-        updateSessionScores();
-    }
-
-    async function updateSessionScores() {
-        const sessionList = [];
-
-        for (const day of Object.keys(sessions)) {
-            for (const session of sessions[day].sessions) {
-                if (session.active) {
-                    sessionList.push(session.session_id);
-                }
-            }
-        }
-
-        if (sessionList.length === 0) {
-            sessionScores = {};
-            return;
-        }
-
-        let resp;
-        try {
-            resp = await axios.post(
-                `http://localhost:3000/get-combined-session/${userData.id}/`,
-                {
-                    sessions: sessionList,
-                    filter: {},
-                },
-            );
-        } catch (e) {
-            console.log(e);
-            return;
-        } finally {
-            sessionScores = resp.data;
-            document.dispatchEvent(new Event("sessionScoresUpdated"));
         }
     }
 
@@ -210,7 +232,17 @@
             }
         }
     }
+
+    function toggleSession(e) {
+        const checkbox = e.target;
+        let session = sessions[day].sessions.filter(
+            (session) => session.session_id === id,
+        )[0];
+        session.active = checkbox.checked;
+    }
 </script>
+
+{$inspect(localScores)}
 
 <!--HTML-->
 {#snippet CalanderButtonWithSession(date, selectedClass)}
@@ -226,93 +258,109 @@
 {/snippet}
 
 <div transition:fade class="container">
-    <div class="calander">
-        <div class="month">
-            <button id="left" onclick={calArrowClicked}>
-                <Left />
-            </button>
-            <span>{months[month]} {year}</span>
-            <button id="right" onclick={calArrowClicked}>
-                <Right />
-            </button>
-        </div>
-        <div class="cal-display">
-            <div class="rows">
-                {#each days as day}
-                    <span class="date day">{day}</span>
-                {/each}
-                {#each dateNumbers as date}
-                    {@const day = `${date.month + 1}/${date.day}/${year}`}
-                    {#if sessions[day]}
-                        {#if sessions[day].active}
-                            {@render CalanderButtonWithSession(
-                                date,
-                                "selected",
-                            )}
+    {#await sessions then sessions}
+        <div class="calander">
+            <div class="month">
+                <button id="left" onclick={calArrowClicked}>
+                    <Left />
+                </button>
+                <span>{months[month]} {year}</span>
+                <button id="right" onclick={calArrowClicked}>
+                    <Right />
+                </button>
+            </div>
+            <div class="cal-display">
+                <div class="rows">
+                    {#each days as day}
+                        <span class="date day">{day}</span>
+                    {/each}
+                    {#each dateNumbers as date}
+                        {@const day = `${date.month + 1}/${date.day}/${year}`}
+                        {#if sessions[day]}
+                            {#if sessions[day].active}
+                                {@render CalanderButtonWithSession(
+                                    date,
+                                    "selected",
+                                )}
+                            {:else}
+                                {@render CalanderButtonWithSession(date)}
+                            {/if}
                         {:else}
-                            {@render CalanderButtonWithSession(date)}
+                            <span class="date">
+                                <button>{date.day}</button>
+                            </span>
                         {/if}
-                    {:else}
-                        <span class="date">
-                            <button>{date.day}</button>
-                        </span>
+                    {/each}
+                </div>
+                <div class="selection">
+                    <button
+                        onclick={calTimeFrameClicked}
+                        data-scope="all"
+                        data-action="add"
+                    >
+                        Add All
+                    </button>
+                    <button
+                        onclick={calTimeFrameClicked}
+                        data-scope="all"
+                        data-action="remove"
+                    >
+                        Remove All
+                    </button>
+                    <button
+                        onclick={calTimeFrameClicked}
+                        data-scope="month"
+                        data-action="add"
+                    >
+                        Add Month
+                    </button>
+                    <button
+                        onclick={calTimeFrameClicked}
+                        data-scope="month"
+                        data-action="remove"
+                    >
+                        Remove Month
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="sessions">
+            {#if message}
+                <div class="prompt">
+                    <div>{message}</div>
+                </div>
+            {/if}
+            <div class="grid">
+                {#each Object.keys(sessions) as day}
+                    {#if sessions[day].active}
+                        {#each sessions[day].sessions as session (session.session_id)}
+                            <label class="session-selector-label">
+                                <span class="id">
+                                    {session.id}
+                                </span>
+                                <span>
+                                    {session.plays}
+                                    <strong>Scores</strong>
+                                </span>
+                                <Toggle
+                                    color="var(--hover)"
+                                    callback={toggleSession}
+                                    cls="session-selector"
+                                    data={session.id}
+                                    checked="true"
+                                />
+                            </label>
+                        {/each}
                     {/if}
                 {/each}
             </div>
-            <div class="selection">
-                <button
-                    onclick={calTimeFrameClicked}
-                    data-scope="all"
-                    data-action="add"
-                >
-                    Add All
-                </button>
-                <button
-                    onclick={calTimeFrameClicked}
-                    data-scope="all"
-                    data-action="remove"
-                >
-                    Remove All
-                </button>
-                <button
-                    onclick={calTimeFrameClicked}
-                    data-scope="month"
-                    data-action="add"
-                >
-                    Add Month
-                </button>
-                <button
-                    onclick={calTimeFrameClicked}
-                    data-scope="month"
-                    data-action="remove"
-                >
-                    Remove Month
-                </button>
-            </div>
         </div>
-    </div>
-    <div class="sessions">
-        {#if message}
-            <div class="prompt">
-                <div>{message}</div>
-            </div>
-        {/if}
-        <div class="grid">
-            {#each Object.keys(sessions) as day}
-                {#if sessions[day].active}
-                    {#each sessions[day].sessions as session (session.session_id)}
-                        <SessionSelector
-                            id={session.session_id}
-                            {day}
-                            plays={session.plays}
-                            bind:sessions
-                        />
-                    {/each}
-                {/if}
-            {/each}
-        </div>
-    </div>
+    {/await}
 </div>
+
+{$inspect(sessions)}
+
+<SessionFilter bind:filter />
 
 <style>
     .container {

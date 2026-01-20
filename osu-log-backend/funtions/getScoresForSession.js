@@ -1,6 +1,58 @@
-const { db, dbQuery } = require("../database.js");
+const { db, dbQuery, pgp } = require("../database.js");
 const { getSessionStats } = require("./generateStats.js");
 const err = require("../errors.js");
+
+const VALID_MODS = [
+  "NM",
+  "TD",
+  "DT",
+  "NC",
+  "HD",
+  "HR",
+  "FL",
+  "PF",
+  "SD",
+  "NF",
+  "EZ",
+  "HT",
+  "SO",
+  "AT",
+  "RX",
+  "AL",
+  "AC",
+  "AS",
+  "AD",
+  "BL",
+  "MF",
+  "NS",
+  "SG",
+  "ST",
+  "WU",
+  "DC",
+  "DF",
+  "WD",
+  "BR",
+  "BM",
+  "BU",
+  "DP",
+  "DS",
+  "FR",
+  "GR",
+  "MG",
+  "MR",
+  "MU",
+  "RD",
+  "RP",
+  "SR",
+  "SI",
+  "SY",
+  "TC",
+  "WG",
+  "CL",
+  "DA",
+  "TP",
+  "TR",
+];
 
 async function getScoresForSession(osu_user_id, sessionID, filter) {
   console.log(`Getting Scores for session ${sessionID}`);
@@ -40,27 +92,15 @@ async function getScoresForSession(osu_user_id, sessionID, filter) {
 }
 
 async function getSession(sessionID, osu_user_id, filter) {
-  let query =
-    "select score, performance, session_id from scores where session_id = $1 and osu_user_id like $2 ";
-  query = applyFilter(query, filter);
+  const baseQuery =
+    "select score, performance, session_id from scores where session_id = $(sessionID) and osu_user_id like $(osuUserID) ";
+  let { query, params } = applyFilter(baseQuery, filter);
+  params.sessionID = sessionID;
+  params.osuUserID = osu_user_id;
+
   query += "order by set_at";
 
-  const { beatmapID, name, mods, acc, pp, ranks } = filter;
-
-  const add = (value, isArray = false) => {
-    return isArray ? value ? [...value] : [] : value ? [value] : [];
-  };
-
-  const params = [
-    sessionID,
-    `${osu_user_id}`,
-    ...add(beatmapID),
-    ...add(name),
-    ...add(mods?.array, true),
-    ...add(acc?.value),
-    ...add(pp?.value),
-    ...add(ranks),
-  ];
+  console.log(pgp.as.format(query, params));
 
   let scores;
   try {
@@ -73,88 +113,74 @@ async function getSession(sessionID, osu_user_id, filter) {
   return scores;
 }
 
-function applyFilter(query, filter) {
-  const { beatmapID, name, mods, acc, pp, ranks, fails } = filter;
-
-  let filterIndex = 3;
+function applyFilter(baseQuery, filter) {
+  const { beatmapID, name, mods, acc, pp, stars, time, ranks, fails } = filter;
+  const conditions = [];
+  const params = {};
 
   if (beatmapID) {
-    query += `and score->'beatmap'->>'id' like '$${filterIndex}' `;
-    filterIndex++;
+    conditions.push("score->'beatmap'->>'id' = $(beatmapID)");
+    params.beatmapID = beatmapID;
   }
 
   if (name) {
-    query += `and score->'beatmapset'->>'title' like '%$${filterIndex}:raw%' `;
-    filterIndex++;
+    conditions.push("score->'beatmapset'->>'title' ILIKE $(nameSearch)");
+    params.nameSearch = `%${name}%`;
   }
 
-  if (mods?.array.length > 0) {
-    if (mods.array[0] === "NM") {
-      query +=
-        `and (jsonb_array_length(score->'mods') = 0 or (jsonb_array_length(score->'mods') = 1 and score->'mods'->0->>'acronym' like 'CL')) `;
+  if (mods?.array?.length > 0) {
+    const safeMods = mods.array.filter((m) => VALID_MODS.includes(m));
+
+    if (safeMods.includes("NM")) {
+      conditions.push(
+        `(jsonb_array_length(score->'mods') = 0 OR (jsonb_array_length(score->'mods') = 1 AND score->'mods'->0->>'acronym' = 'CL'))`,
+      );
     } else {
-      query += "and score->'mods' @@ '";
-      mods.array.forEach((_, i) => {
-        if (i === mods.array.length - 1) {
-          query += `exists($[*] ? (@.acronym == "$${filterIndex}:raw"))' `;
-        } else {
-          query += `exists($[*] ? (@.acronym == "$${filterIndex}:raw")) && `;
-        }
-        filterIndex++;
-      });
+      conditions.push("score->'mods' @> $(modJson)::jsonb");
+      params.modJson = JSON.stringify(safeMods.map((m) => ({ acronym: m })));
 
       if (mods.exclusive) {
-        query +=
-          `and jsonb_array_length(score->'mods') = ${mods.array.length} `;
+        conditions.push("jsonb_array_length(score->'mods') = $(modCount)");
+        params.modCount = safeMods.length;
       }
     }
   }
 
-  if (acc?.value) {
-    query = numericFilter(
-      acc.opperator,
-      "and (score->>'accuracy')::float",
-      query,
-      filterIndex,
-    );
-    filterIndex++;
-  }
+  const addRange = (field, min, max, key) => {
+    if (min !== undefined && min !== 0) {
+      conditions.push(`(${field})::float >= $(${key}Min)`);
+      params[`${key}Min`] = min;
+    }
+    if (max !== undefined && max !== 0) {
+      conditions.push(`(${field})::float <= $(${key}Max)`);
+      params[`${key}Max`] = max;
+    }
+  };
 
-  if (pp?.value) {
-    query = numericFilter(
-      pp.opperator,
-      "and (performance->'perf'->>'pp')::float",
-      query,
-      filterIndex,
-    );
-    filterIndex++;
-  }
+  addRange("score->>'accuracy'", acc.min / 100, acc.max / 100, "acc");
+  addRange("performance->'perf'->>'pp'", pp.min, pp.max, "pp");
+  addRange(
+    "performance->'attributes'->>'stars'",
+    stars.min,
+    stars.max,
+    "stars",
+  );
+  addRange("score->'beatmap'->>'total_length'", time.min, time.max, "pp");
 
   if (ranks?.length > 0) {
-    query += `and array_position($${filterIndex}, score->>'rank') is not null `;
+    conditions.push("score->>'rank' = any($(ranks))");
+    params.ranks = ranks;
   }
 
   if (fails === false) {
-    query += `and (score->>'passed')::boolean `;
+    conditions.push("(score->>'passed')::boolean = true");
   }
 
-  return query;
-}
+  finalQuery = conditions.length > 0
+    ? `${baseQuery} and ${conditions.join(" and ")} `
+    : baseQuery;
 
-function numericFilter(opperator, expression, query, filterIndex) {
-  switch (opperator) {
-    case ">":
-      query += `${expression} >= $${filterIndex} `;
-      break;
-    case "<":
-      query += `${expression} <= $${filterIndex} `;
-      break;
-    case "=":
-      query += `${expression} = $${filterIndex} `;
-      break;
-  }
-
-  return query;
+  return { query: finalQuery, params };
 }
 
 module.exports = {

@@ -1,4 +1,5 @@
 const { getScoresForSession } = require("./getScoresForSession.js");
+const { NO_SCORES } = require("../errors.js");
 
 //TODO: something here is fetching a session twise in some instances (i have not noticed this more than once)
 //
@@ -38,7 +39,7 @@ const scoreMap = {
 async function getCombinedSession(osu_user_id, sessions, filter) {
   console.log(`Getting scores for sessions ${sessions}...`);
 
-  let combined;
+  let combined = {};
 
   //TODO: I need to stop doing this
   for (const s of sessions) {
@@ -46,9 +47,17 @@ async function getCombinedSession(osu_user_id, sessions, filter) {
       const session = await getScoresForSession(osu_user_id, s, filter);
       combined = mergeSession(session, combined);
     } catch (e) {
-      console.log(e);
-      throw e;
+      if (e === NO_SCORES) {
+        console.log(`No scores that match filter for session ${s}`);
+      } else {
+        console.log(e);
+        throw e;
+      }
     }
+  }
+
+  if (!combined.scores) {
+    return;
   }
 
   const graphTypes = ["pp", "sr", "bpm", "speed", "aim", "acc", "pass"];
@@ -118,7 +127,7 @@ async function getCombinedSessionEndPoint(req, res) {
   const osu_user_id = req.params.userID;
   const body = req.body;
 
-  console.log(body);
+  console.log(osu_user_id, body);
 
   const sessions = body.sessions;
   const filter = body.filter;
@@ -133,6 +142,7 @@ async function getCombinedSessionEndPoint(req, res) {
   try {
     combinedSession = await getCombinedSession(osu_user_id, sessions, filter);
   } catch (e) {
+    console.log(e);
     res.status(500).send(e);
     return;
   }

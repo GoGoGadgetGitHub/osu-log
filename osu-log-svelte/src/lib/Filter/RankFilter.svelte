@@ -41,12 +41,9 @@
         } else {
             addRank(name);
         }
-        document.dispatchEvent(new Event("filterupdate"));
     }
 
     function removeRank(name) {
-        const rank = document.querySelector(`.rank[data-name="${name}"]`);
-        rank.classList.remove("rank-active");
         const index = ranks.indexOf(name);
         if (index > -1) {
             ranks = ranks.filter((rank) => {
@@ -56,8 +53,6 @@
     }
 
     function addRank(name) {
-        const rank = document.querySelector(`.rank[data-name="${name}"]`);
-        rank.classList.add("rank-active");
         ranks = [...ranks, name];
     }
 
@@ -70,31 +65,19 @@
     }
 </script>
 
-{$inspect(ranks)}
-
 <div class="ranks">
     {#each grades as { name, color, background }}
-        {#if ignoreGradient.includes(name)}
-            <button
-                style:--color={color}
-                style:--hover-background={background}
-                data-name={name}
-                onclick={clicked}
-                class="rank"
-            >
-                <span>{name}</span>
-            </button>
-        {:else}
-            <button
-                style:--color={color}
-                style:--hover-background={color}
-                onclick={clicked}
-                data-name={name}
-                class="rank"
-            >
-                <span>{name}</span>
-            </button>
-        {/if}
+        <button
+            style:--color={color}
+            style:--hover-background={ignoreGradient.includes(name)
+                ? background
+                : color}
+            data-name={name}
+            onclick={clicked}
+            class={["rank", ranks.includes(name) ? "rank-active" : ""]}
+        >
+            <span>{name}</span>
+        </button>
     {/each}
 </div>
 

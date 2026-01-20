@@ -39,7 +39,7 @@
         {id}
         type="checkbox"
         data-value={data}
-        onclick={callback}
+        oninput={callback}
         bind:checked
     />
     <div style="--color: {color}" class="slider round"></div>

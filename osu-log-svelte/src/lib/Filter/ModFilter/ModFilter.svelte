@@ -5,7 +5,11 @@
     import Wiggle from "$lib/Svg/mods/Wiggle.svelte";
 
     let modTooltip = $state("");
-    let { mods = $bindable([]), lazer, exclusive } = $props();
+    let {
+        mods = $bindable([]),
+        lazer,
+        exclusive = $bindable(false),
+    } = $props();
 
     let modsDisplay = $derived.by(() => {
         if (lazer) {
@@ -28,17 +32,14 @@
             removeMod(acronym);
         } else {
             if (acronym === "NM") {
-                clearAll();
+                mods = [];
             }
             removeMod("NM");
             addMod(acronym);
         }
-        document.dispatchEvent(new Event("filterupdate"));
     }
 
     function removeMod(acronym) {
-        const mod = document.querySelector(`.mod[data-acronym="${acronym}"]`);
-        mod.classList.remove("mod-active");
         const index = mods.indexOf(acronym);
         if (index > -1) {
             mods = mods.filter((mod) => {
@@ -48,17 +49,7 @@
     }
 
     function addMod(acronym) {
-        const mod = document.querySelector(`.mod[data-acronym="${acronym}"]`);
-        mod.classList.add("mod-active");
         mods = [...mods, acronym];
-    }
-
-    function clearAll() {
-        const modButtons = document.querySelectorAll(".mod");
-        for (const modButton of modButtons) {
-            const acronym = modButton.dataset.acronym;
-            removeMod(acronym);
-        }
     }
 
     function mouseOver(e) {
@@ -70,8 +61,6 @@
     }
 </script>
 
-{$inspect(mods)}
-
 <div class="mods-container">
     <div class="mods">
         {#each Object.keys(modsDisplay) as type}
@@ -82,7 +71,7 @@
                     onmouseleave={mouseLeave}
                     onfocus={mouseOver}
                     onclick={clicked}
-                    class="mod"
+                    class={["mod", mods.includes(acronym) ? "mod-active" : ""]}
                     data-acronym={acronym}
                     style:--color={modTypeColors[type]}
                 >
@@ -102,16 +91,15 @@
             tooltip="Toggle lazer scores"
             color="var(--hover)"
             bind:checked={lazer}
-            callback={clearAll}
+            callback={() => {
+                mods = [];
+            }}
         />
         Exclusive<Toggle
             id="exclusive"
             tooltip="Exclusivly show scores with these mods"
             color="var(--hover)"
             bind:checked={exclusive}
-            callback={() => {
-                document.dispatchEvent(new Event("filterupdate"));
-            }}
         />
     </div>
 </div>
@@ -187,13 +175,6 @@
         border-radius: 50%;
     }
 
-    input {
-        position: relative;
-        height: 0rem;
-        width: 0rem;
-        opacity: 0;
-    }
-
     .tooltip {
         position: absolute;
         bottom: 105%;
@@ -204,5 +185,7 @@
         border-radius: 5px;
         padding: 0.3rem;
         color: var(--foreground);
+        pointer-events: none;
+        z-index: 1000;
     }
 </style>
