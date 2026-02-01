@@ -60,3 +60,10 @@ export { default as S } from "./Svg/ranks/S.svelte";
 export { default as Sh } from "./Svg/ranks/SH.svelte";
 export { default as X } from "./Svg/ranks/X.svelte";
 export { default as Xh } from "./Svg/ranks/XH.svelte";
+
+export { default as Filter } from "./Svg/Filter.svelte";
+export { default as Table } from "./Svg/Table.svelte";
+export { default as Person } from "./Svg/Person.svelte";
+export { default as Percent } from "./Svg/Percent.svelte";
+export { default as Calendar } from "./Svg/Calendar.svelte";
+export { default as Chart } from "./Svg/Chart.svelte";

@@ -15,7 +15,7 @@
     ];
 </script>
 
-<div>
+<div id="chart">
     <div class="charts-tabs-container">
         {#each tabMap as { title, name }}
             <a
@@ -37,10 +37,7 @@
                 {#if sessionScores.scores}
                     <div><TheChart {sessionScores} /></div>
                 {:else}
-                    <div class="no-scores">
-                        No Scores!<br />
-                        Click on one of the highlighted dates on the calender.
-                    </div>
+                    <div class="no-scores">No Scores!</div>
                 {/if}
             {/if}
         {/each}

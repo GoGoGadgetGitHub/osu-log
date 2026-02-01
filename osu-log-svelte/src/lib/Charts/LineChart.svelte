@@ -90,9 +90,28 @@
     let yAxes = $state({});
 
     const populateCharts = () => {
+        if (!sessionScores.meta) return;
+
         const ret = {};
+
         for (const { type, name, color } of configs) {
-            const data = $state.snapshot(sessionScores.meta.graphData[type]);
+            const src = sessionScores.meta.graphData[type];
+
+            const data = new Array(src.length);
+            const yValues = new Array(src.length);
+
+            //make shallow copy of data that chart.js can mutate
+            for (let i = 0; i < src.length; i++) {
+                const {
+                    x,
+                    y,
+                    meta: { name, id, date },
+                } = src[i];
+
+                data[i] = { x, y, meta: { name, id, date } };
+                yValues[i] = y;
+            }
+
             ret[name] = {
                 values: {
                     type: "scatter",
@@ -242,6 +261,7 @@
                 scales: {
                     x: {
                         type: "linear",
+                        max: sessionScores.scores.length - 1,
                     },
                     ...yAxes,
                 },

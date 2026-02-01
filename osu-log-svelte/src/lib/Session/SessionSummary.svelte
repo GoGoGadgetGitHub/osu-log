@@ -1,12 +1,10 @@
 <script>
-    import { derived } from "svelte/store";
-
     import { A, B, C, D, F, S, X, Sh, Xh } from "$lib";
 
     let gradeIcons = { X, XH: Xh, S, SH: Sh, A, B, C, D };
     let { sessionScores } = $props();
     let { sr, acc, bpm, pp, passes, fails, plays, playtime } = $derived(
-        sessionScores.meta.stats,
+        sessionScores.meta ? sessionScores.meta.stats : {},
     );
     const { topStats, bottomStats } = $derived({
         topStats: [
@@ -46,7 +44,9 @@
     }
 </script>
 
-<div class="container">
+{$inspect(sr, acc, bpm, pp, passes, fails, plays, playtime)}
+
+<div class="container" id="summary">
     {#if sessionScores.meta}
         <h2>Session Summary</h2>
         <div class="stats">

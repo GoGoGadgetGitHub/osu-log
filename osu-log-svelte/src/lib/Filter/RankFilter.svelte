@@ -85,6 +85,7 @@
     .ranks {
         width: 100%;
         display: flex;
+        flex-wrap: wrap;
         justify-content: center;
         gap: 0.3rem;
     }

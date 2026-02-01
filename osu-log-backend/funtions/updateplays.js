@@ -1,8 +1,8 @@
 const { db, pgp, dbQuery } = require("../database.js");
 const api = require("../osuAPI.js");
 const { calculatePerformanceForScores } = require("./calculator.js");
-const { generateStatsForSession } = require(
-  "./generateStats.js",
+const { generateStats, insertOrUpdateStats } = require(
+  "./stats.js",
 );
 const err = require("../errors.js");
 
@@ -12,9 +12,9 @@ async function getLatestScore(osu_user_id) {
   let latestScore;
   try {
     latestScore = await dbQuery(
-      "select * from scores where osu_user_id like '$1' order by set_at desc limit 1;",
+      "select * from scores where osu_user_id = $(osu_user_id) order by set_at desc limit 1;",
       db.oneOrNone,
-      [osu_user_id],
+      { osu_user_id: osu_user_id.toString() },
     );
     console.log(`User had scores saved: ${!!latestScore}`);
     if (latestScore) {
@@ -39,9 +39,12 @@ async function getLatestScore(osu_user_id) {
 async function addScores(osu_user_id, token) {
   console.log(`Adding scores for: ${osu_user_id}`);
 
-  const plays = await recentPlays(osu_user_id, token);
-  if (!plays) {
-    return "FAIL-API";
+  let plays;
+  try {
+    plays = await recentPlays(osu_user_id, token);
+  } catch (e) {
+    console.log(e);
+    throw e;
   }
 
   let latestScore;
@@ -71,6 +74,7 @@ async function addScores(osu_user_id, token) {
 
     const timeDiff = timeDiffrenceInMinutes(timeStampPrev, timeStampCurrent);
 
+    // Log this scores as part of a new session
     if (timeDiff > SESSION_GAP) {
       console.log(
         `Starting new session, last session was ${session_id}, new session is ${Number(session_id) + 1
@@ -88,8 +92,8 @@ async function addScores(osu_user_id, token) {
       score,
       set_at: score.ended_at,
       session_id,
-      performance: undefined,
     });
+
     prevScore = score;
   }
 
@@ -108,7 +112,7 @@ async function addScores(osu_user_id, token) {
   }
 
   scoresToBeInserted.forEach((score, index) => {
-    score.performance = performances[index];
+    score["performance"] = performances[index];
     score.score.beatmap.bpm = calculateBpm(score.score);
     const { perc, length } = calculatePassedStats(score.score);
     score.score.passed_percentage = perc;
@@ -117,16 +121,12 @@ async function addScores(osu_user_id, token) {
 
   try {
     await insertScores(scoresToBeInserted);
+    for (session of sessionsChanged) {
+      const stats = await generateStats(session, osu_user_id);
+      await insertOrUpdateStats(stats, osu_user_id, session);
+    }
   } catch (e) {
     throw e;
-  }
-
-  for (const sessionID of sessionsChanged) {
-    try {
-      await generateStatsForSession(sessionID, osu_user_id);
-    } catch (e) {
-      throw e;
-    }
   }
 }
 

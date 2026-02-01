@@ -8,7 +8,8 @@
     import Star from "$lib/Svg/Star.svelte";
     import { boolean, im } from "mathjs";
 
-    let { filter = $bindable(), filterChange = $bindable(false) } = $props();
+    let { filter = $bindable() } = $props();
+    let localFilter = $state();
 
     let beatmapID = $state("");
     let name = $state("");
@@ -27,7 +28,7 @@
     let fails = $state(true);
 
     $effect.pre(() => {
-        filter = {
+        localFilter = {
             beatmapID,
             name,
             mods: {
@@ -72,16 +73,16 @@
         lazer = false;
         ranks = [];
         fails = true;
-        filterChange = !filterChange;
     }
 
     function applyFilter(e) {
         e.preventDefault();
-        filterChange = !filterChange;
+        console.log("clicked");
+        filter = localFilter;
     }
 </script>
 
-<form>
+<form id="filter">
     <div class="filters">
         <div class="title-id">
             <label>
@@ -90,7 +91,6 @@
                     type="text"
                     placeholder="Search by title..."
                     bind:value={name}
-                    oninput={updateFilter}
                 />
             </label>
             <span>OR</span>
@@ -260,6 +260,13 @@
         }
         &::-webkit-outer-spin-button {
             -webkit-appearance: none;
+        }
+    }
+
+    @media (max-width: 800px) {
+        .title-id {
+            flex-direction: column;
+            gap: 0.5rem;
         }
     }
 </style>

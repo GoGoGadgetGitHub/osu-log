@@ -2,7 +2,7 @@
 	let { userData } = $props();
 </script>
 
-<div class="profile-container">
+<div id="profile" class="profile-container">
 	<div class="profile-img">
 		<!-- TODO: find out why this does not open a new tab-->
 		<a

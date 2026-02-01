@@ -4,13 +4,16 @@ const api = require("../osuAPI.js");
 async function getUserDataEndpoint(req, res) {
   const username = req.params.username;
 
-  const userData = await getUserData(username);
-  if (!userData) {
+  let userData;
+  try {
+    userData = await getUserData(username);
+  } catch (e) {
+    console.log(e);
     res.status(500).send("FAIL-API");
-    return;
+    throw e;
+  } finally {
+    res.status(200).json(userData);
   }
-
-  res.status(200).json(userData);
 }
 
 async function getUserData(username, token) {
@@ -37,7 +40,7 @@ async function getUserData(username, token) {
       },
     });
   } catch (e) {
-    console.log(e.message);
+    console.log("From osu: ", e.message);
     throw err.FAIL_API;
   }
 

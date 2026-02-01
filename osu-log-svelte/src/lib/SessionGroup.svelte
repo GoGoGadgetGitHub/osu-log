@@ -5,11 +5,12 @@
     import Charts from "$lib/Charts/Charts.svelte";
     import SessionFilter from "$lib/Filter/SessionFilter.svelte";
 
-    let { userData, error = $bindable(""), loading } = $props();
+    let { userData, error = $bindable("") } = $props();
     let sessionScores = $state({});
+    let scoresLoading = $state({});
 </script>
 
-<SessionControls bind:error bind:sessionScores {userData} />
-<ScoresTable {sessionScores} />
+<SessionControls bind:error bind:sessionScores bind:scoresLoading {userData} />
 <SessionSummary {sessionScores} />
+<ScoresTable {sessionScores} {scoresLoading} />
 <Charts {sessionScores} />

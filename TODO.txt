@@ -1,15 +1,4 @@
-Filter:
-	Filter by stars
-
-Scores Table:
-	Add failed indicator and percentage
-
-UI:
-	Work on UI flow and user feedback
-
-Graph:
-	Fix line graph not filling graph area bug
-
 Add more stats to profile component use bathbot as refrence
 
+Add authentication and
 Figure out auto refresh logic for users

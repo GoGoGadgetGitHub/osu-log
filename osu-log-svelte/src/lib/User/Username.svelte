@@ -6,21 +6,24 @@
 		userData = $bindable(""),
 		initial = $bindable(true),
 		loading = $bindable(false),
-		error,
+		error = $bindable(""),
 		redirect,
 	} = $props();
 
 	let value = $state();
 
 	async function getUserData() {
+		error = "";
+		userData = "";
 		initial = false;
+		loading = true;
 		let resp;
 		try {
-			loading = true;
 			resp = await axios.get(`http://localhost:3000/track/${value}`);
 		} catch (e) {
 			console.log(e);
 			error = `Could not fetch user data for ${value}`;
+			loading = false;
 		} finally {
 			userData = resp.data;
 			loading = false;

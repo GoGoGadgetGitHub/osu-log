@@ -4,10 +4,10 @@
     import Star from "$lib/Svg/Star.svelte";
     import LargeLoader from "$lib/UIComponents/Loaders/LargeLoader.svelte";
     import SessionGroup from "$lib/SessionGroup.svelte";
-
     import { slide, fade } from "svelte/transition";
-    import axios from "axios";
     import Logo from "$lib/Svg/Logo.svelte";
+    import CornerNav from "$lib/UIComponents/CornerNav.svelte";
+    import axios from "axios";
 
     let userData = $state("");
     let loading = $state(false);
@@ -20,33 +20,38 @@
         let resp;
         try {
             resp = await axios.post(
-                `http://localhost:3000/get-combined-session/${userData.id}/`,
+                `http://localhost:3000/get-scores/${userData.id}/`,
                 {
-                    sessions: [0],
                     filter: {
-                        fails: false,
+                        sessions: [0, 1, 2],
+                        fails: true,
+                        mods: {
+                            array: ["HR"],
+                            exclusive: true,
+                        },
                     },
                 },
             );
         } catch (e) {
             console.log(e);
-            return;
         } finally {
             console.log(resp.data);
         }
-    }}>Test</button
+    }}
 >
+    test
+</button>
 
-{#if initial}
+{#if initial || error}
     <div transition:fade class="initial">
         <div class="logo">
             <Logo />
         </div>
-        <Username bind:userData bind:initial {error} bind:loading />
+        <Username bind:userData bind:initial bind:error bind:loading />
     </div>
 {/if}
 
-{#if loading && !userData}
+{#if loading}
     <LargeLoader />
 {/if}
 
@@ -55,12 +60,13 @@
         <Logo />
     </div>
     <div transition:slide class="main">
-        <Username bind:userData bind:initial {error} {loading} />
+        <Username bind:userData bind:initial bind:error bind:loading />
         <div class="profile-and-session">
             <Profile {userData} />
         </div>
         <SessionGroup {userData} {error} {loading} />
     </div>
+    <CornerNav />
 {/if}
 
 <style>
@@ -74,8 +80,8 @@
         background: var(--background-1);
         border-radius: var(--radius);
         padding: 1rem;
+        box-sizing: border-box;
     }
-
     .initial {
         background: unset;
         position: absolute;
@@ -100,6 +106,14 @@
             margin: auto;
             display: grid;
             row-gap: 1rem;
+        }
+    }
+    :global(html) {
+        scroll-behavior: smooth;
+    }
+    @media (prefers-reduced-motion: reduce) {
+        :global(html) {
+            scroll-behavior: auto;
         }
     }
 </style>

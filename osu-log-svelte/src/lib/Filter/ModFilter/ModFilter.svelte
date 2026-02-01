@@ -88,7 +88,7 @@
     <div class="lazer-exclusive">
         Lazer<Toggle
             id="lazer"
-            tooltip="Toggle lazer scores"
+            tooltip="Show lazer mods"
             color="var(--hover)"
             bind:checked={lazer}
             callback={() => {

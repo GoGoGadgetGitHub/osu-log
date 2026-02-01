@@ -11,9 +11,9 @@ async function getSessions(osu_user_id) {
   let sessions;
   try {
     sessions = await dbQuery(
-      "select distinct on (session_id) session_id, set_at from scores where osu_user_id like $1",
+      "select distinct on (session_id) session_id, set_at from scores where osu_user_id = $(osu_user_id)",
       db.manyOrNone,
-      [osu_user_id],
+      { osu_user_id },
     );
   } catch (e) {
     throw e;
@@ -25,6 +25,8 @@ async function getSessions(osu_user_id) {
   } catch (e) {
     throw e;
   }
+
+  console.log(counts);
 
   sessions.map((session, index) => {
     session["plays"] = counts[index].plays;
@@ -52,19 +54,15 @@ async function getSessions(osu_user_id) {
 
 async function getPlayCountPerSession(osu_user_id) {
   const query =
-    "select session_id, stat_obj->'plays' as plays from stats where osu_user_id like $1;";
+    "select stat_obj->'plays' as plays from stats where osu_user_id = $(osu_user_id);";
 
   let result;
   try {
-    result = await dbQuery(query, db.manyOrNone, [osu_user_id]);
+    result = await dbQuery(query, db.manyOrNone, { osu_user_id });
   } catch (e) {
     console.error("Error when fetching play count for sessions...");
     throw e;
   }
-
-  result.map((session) => {
-    delete session.session_id;
-  });
 
   return result;
 }

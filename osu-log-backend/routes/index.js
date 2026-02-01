@@ -1,8 +1,8 @@
 const express = require("express");
 const { userData, userDataEndpoint } = require("../funtions/userdata.js");
 const { addScores, addScoresEndpoint } = require("../funtions/updateplays.js");
-const { getCombinedSessionEndPoint } = require(
-  "../funtions/getCombinedSession.js",
+const { getScoresEndpoint } = require(
+  "../funtions/getScores.js",
 );
 const { getSessionsEndpoint } = require(
   "../funtions/getSessions.js",
@@ -21,8 +21,8 @@ router.get(
 );
 
 router.post(
-  "/get-combined-session/:userID",
-  getCombinedSessionEndPoint,
+  "/get-scores/:userID",
+  getScoresEndpoint,
 );
 
 router.get(
@@ -46,9 +46,12 @@ router.get("/track/:username/", async (req, res) => {
     res.status(500).json(e);
   }
 
-  const user = await userData(username, token);
-  if (user === "FAIL-API") {
-    res.status(500).send(user);
+  let user;
+  try {
+    user = await userData(username, token);
+  } catch (e) {
+    console.log(e);
+    res.status(500).json(e);
     return;
   }
 

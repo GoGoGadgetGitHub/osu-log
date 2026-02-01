@@ -31,7 +31,7 @@
 		minute: "numeric",
 	});
 
-	let { sessionScores, changeSession, loading } = $props();
+	let { sessionScores, scoresLoading } = $props();
 	let gradeIcons = { X, XH: Xh, S, SH: Sh, A, B, C, D, F };
 	let index = $state(0);
 	const paginationWidth = 100;
@@ -47,6 +47,7 @@
 	let paginationStartIndex = $derived(paginationWidth * index);
 
 	let displayedScores = $derived.by(() => {
+		if (!sessionScores.scores) return [];
 		let criteria;
 
 		Object.keys(lastOrder).forEach((key) => {
@@ -173,6 +174,11 @@
 		id={`score-${score.id}`}
 	>
 		<th class="grade-icon">
+			{#if !score.passed}
+				<span class="fail-percent">
+					{Math.floor(score.passed_percentage)}%
+				</span>
+			{/if}
 			<div class="icon-wrapper">
 				<svelte:component
 					this={score.passed ? gradeIcons[score.rank] : gradeIcons.F}
@@ -222,7 +228,7 @@
 	</tr>
 {/snippet}
 
-<div transition:slide class="datatable-container">
+<div id="table" transition:slide class="datatable-container">
 	<SortingDropdown />
 
 	<table>
@@ -249,22 +255,26 @@
 			</tr>
 		</thead>
 
-		{#if !sessionScores.scores}
-			<caption>
-				No Scores!<br />Click on one of the highlighted dates on the calendar
-			</caption>
-		{/if}
-
 		<tbody>
-			{#each displayedScores as { score, performance }, index}
-				{#await loadImage(score.beatmapset.covers.slimcover)}
-					<tr transition:fade style="position: relative;">
-						<SmallLoader />
-					</tr>
-				{:then}
-					{@render tableRow(score, performance)}
-				{/await}
-			{/each}
+			{#if scoresLoading}
+				<tr class="info">
+					<SmallLoader />
+				</tr>
+			{:else if !sessionScores.scores}
+				{#if !sessionScores.scores}
+					<tr class="info"><th>No Scores!</th></tr>
+				{/if}
+			{:else}
+				{#each displayedScores as { score, performance }, index}
+					{#await loadImage(score.beatmapset.covers.slimcover)}
+						<tr transition:fade style="position: relative;">
+							<SmallLoader />
+						</tr>
+					{:then}
+						{@render tableRow(score, performance)}
+					{/await}
+				{/each}
+			{/if}
 		</tbody>
 	</table>
 </div>
@@ -280,5 +290,204 @@
 {/if}
 
 <style>
-	@import "./scoretable.css";
+	.datatable-container {
+		position: relative;
+		height: 40rem;
+		overflow-y: scroll;
+		overflow-x: visible;
+		border-radius: 20px;
+	}
+
+	table {
+		width: 100%;
+		color: var(--foreground);
+		border-collapse: collapse;
+	}
+
+	thead {
+		position: sticky;
+		top: 0;
+		color: var(--foreground);
+		z-index: 3;
+	}
+
+	thead tr {
+		background: var(--foreground);
+		color: var(--background-0);
+		padding: 10px 20px;
+		height: max-content;
+		border-radius: 30px;
+		box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.2);
+	}
+
+	thead th {
+		display: flex;
+		gap: 0.5rem;
+		overflow: unset;
+		cursor: pointer;
+	}
+
+	th {
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		position: relative;
+		overflow: hidden;
+	}
+
+	caption {
+		position: absolute;
+		top: 50%;
+		left: 50%;
+		translate: -50% -50%;
+		font-weight: bold;
+	}
+
+	:global(th svg) {
+		fill: var(--background-0);
+		width: 1.3rem;
+		height: 1.3rem;
+	}
+
+	tr {
+		display: grid;
+		grid-template-columns: var(--scores-table-template);
+		margin-bottom: 0.8rem;
+		border-radius: 30px 0 0 30px;
+		overflow: hidden;
+		padding: 10px;
+		height: 2.2rem;
+	}
+
+	.info {
+		all: unset;
+		position: absolute;
+		top: 50%;
+		left: 50%;
+		translate: -50% -50%;
+	}
+
+	.info:hover {
+		all: unset;
+	}
+
+	tbody tr {
+		border-left: 8px solid var(--foreground);
+		transition: var(--transition);
+	}
+
+	tbody tr:hover {
+		border-left: 8px solid var(--hover);
+	}
+
+	.title {
+		height: 100%;
+		justify-content: center;
+	}
+
+	.title span {
+		display: -webkit-box;
+		-webkit-box-orient: vertical;
+		-webkit-line-clamp: 1;
+		line-clamp: 1;
+		overflow: hidden;
+		text-overflow: ellipsis;
+	}
+
+	.grade-icon {
+		position: relative;
+	}
+
+	.fail-percent {
+		position: absolute;
+		left: 50%;
+		top: 50%;
+		z-index: 2;
+		translate: -50% -50%;
+		color: #aa3e3c;
+	}
+
+	.icon-wrapper {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+	}
+
+	:global(.icon-wrapper svg) {
+		width: 4rem;
+		height: 1.5rem;
+	}
+
+	.table-below {
+		display: flex;
+		justify-content: space-between;
+		color: var(--foreground);
+	}
+
+	.stars::after {
+		content: " ★";
+	}
+
+	.acc::after {
+		content: " %";
+	}
+
+	.pp::after {
+		content: " pp";
+	}
+
+	@media (max-width: 800px) {
+		tr {
+			height: 4rem;
+			grid-template-rows: 1.5rem 1.5rem 1.5rem;
+			grid-template-columns: 7rem 1fr 5rem;
+		}
+
+		thead {
+			display: none;
+		}
+
+		:root {
+			--scores-table-template: 1fr 3fr 1fr;
+		}
+
+		.grade-icon {
+			grid-column: 1;
+			grid-row: 1 / span 2;
+		}
+
+		:global(.icon-wrapper svg) {
+			margin: auto;
+		}
+
+		.mods {
+			grid-column: 1;
+			grid-row: 3;
+		}
+
+		.stars {
+			grid-column: 3;
+			grid-row: 1;
+		}
+
+		.title {
+			grid-column: 2;
+			grid-row: 1 / span 2;
+		}
+
+		.pp {
+			grid-row: 3;
+			grid-column: 3;
+		}
+
+		.time {
+			display: none;
+		}
+
+		.table-below {
+			flex-wrap: wrap;
+			justify-content: space-between;
+			gap: 1rem;
+		}
+	}
 </style>
