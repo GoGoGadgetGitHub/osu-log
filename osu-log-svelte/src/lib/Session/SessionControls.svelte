@@ -36,6 +36,7 @@
     let {
         sessionScores = $bindable({}),
         scoresLoading = $bindable({}),
+        filtered = $bindable(false),
         userData,
     } = $props();
 
@@ -329,7 +330,7 @@
     </div>
 </div>
 
-<SessionFilter bind:filter />
+<SessionFilter bind:filter bind:filtered />
 
 <style>
     .container {
@@ -380,13 +381,18 @@
         justify-content: space-between;
     }
 
-    .sessions button,
     .selection button {
         border: none;
         background: var(--background-3);
         color: var(--foreground);
         border-radius: var(--radius);
         padding: 0.4rem;
+        transition: 0.45s;
+    }
+
+    .selection button:hover {
+        background: var(--background-4);
+        cursor: pointer;
     }
 
     .selection > * {
@@ -524,6 +530,11 @@
         }
         .sessions .grid {
             grid-template-columns: 1fr;
+        }
+        .calander {
+            margin: auto;
+            width: 60%;
+            min-width: 20rem;
         }
     }
 </style>

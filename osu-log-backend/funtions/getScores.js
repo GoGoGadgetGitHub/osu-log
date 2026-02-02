@@ -1,4 +1,4 @@
-const { db, dbQuery, pgp } = require("../database.js");
+const { db, dbQuery } = require("../database.js");
 const { NO_SCORES } = require("../errors.js");
 const { generateStats, getStats } = require(
   "./stats.js",
@@ -116,22 +116,14 @@ async function getScoresAndStats(osu_user_id, filter) {
 
 function needStats(filter) {
   if (filter.ranks?.length > 0) return true;
-
   if (filter.fails === false) return true;
-
-  if (filter.mods?.array?.length > 0) {
-    return true;
-  }
+  if (filter.mods?.array?.length > 0) return true;
 
   Object.keys(filter).forEach((key) => {
     if (
-      key === "acc" &&
-      (filter[key].min > 0 || filter[key].max === 100 || filter[key].max === 0)
+      filter[key].min &&
+      (filter[key].min !== 0 || filter[key].max !== 0)
     ) {
-      return true;
-    }
-
-    if (Object.keys(key).length > 0 && key.min > 0 || key.max > 0) {
       return true;
     }
   });

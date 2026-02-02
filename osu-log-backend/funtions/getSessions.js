@@ -1,4 +1,4 @@
-const { db, pgp, dbQuery } = require("../database.js");
+const { db, dbQuery } = require("../database.js");
 
 const dateFormatter = new Intl.DateTimeFormat("en-US", {
   year: "numeric",

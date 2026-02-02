@@ -8,9 +8,18 @@
     let { userData, error = $bindable("") } = $props();
     let sessionScores = $state({});
     let scoresLoading = $state({});
+    let filtered = $state(false);
 </script>
 
-<SessionControls bind:error bind:sessionScores bind:scoresLoading {userData} />
-<SessionSummary {sessionScores} />
+{$inspect("filter applied", filtered)}
+
+<SessionControls
+    bind:error
+    bind:sessionScores
+    bind:scoresLoading
+    bind:filtered
+    {userData}
+/>
+<SessionSummary {sessionScores} {filtered} />
 <ScoresTable {sessionScores} {scoresLoading} />
 <Charts {sessionScores} />

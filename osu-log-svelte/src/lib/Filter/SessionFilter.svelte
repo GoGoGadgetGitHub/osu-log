@@ -8,7 +8,7 @@
     import Star from "$lib/Svg/Star.svelte";
     import { boolean, im } from "mathjs";
 
-    let { filter = $bindable() } = $props();
+    let { filter = $bindable(), filtered = $bindable() } = $props();
     let localFilter = $state();
 
     let beatmapID = $state("");
@@ -28,6 +28,42 @@
     let fails = $state(true);
 
     $effect.pre(() => {
+        resetFilter();
+    });
+
+    function applyFilter(e) {
+        e.preventDefault();
+        filter = localFilter;
+        checkFilter();
+    }
+
+    function clearFilter(e) {
+        if (e) e.preventDefault();
+        resetFields();
+        resetFilter();
+        filter = localFilter;
+        filtered = false;
+    }
+
+    function resetFields() {
+        beatmapID = "";
+        name = "";
+        mods = [];
+        exclusive = false;
+        ppMin = 0;
+        ppMax = 0;
+        accMin = 0;
+        accMax = 100;
+        srMin = 0;
+        srMax = 0;
+        tMin = 0;
+        tMax = 0;
+        lazer = false;
+        ranks = [];
+        fails = true;
+    }
+
+    function resetFilter() {
         localFilter = {
             beatmapID,
             name,
@@ -54,31 +90,24 @@
             ranks,
             fails,
         };
-    });
-
-    function resetFilter(e) {
-        e.preventDefault();
-        beatmapID = "";
-        name = "";
-        mods = [];
-        exclusive = false;
-        ppMin = 0;
-        ppMax = 0;
-        accMin = 0;
-        accMax = 100;
-        srMin = 0;
-        srMax = 0;
-        tMin = 0;
-        tMax = 0;
-        lazer = false;
-        ranks = [];
-        fails = true;
     }
 
-    function applyFilter(e) {
-        e.preventDefault();
-        console.log("clicked");
-        filter = localFilter;
+    function checkFilter() {
+        filtered = false;
+
+        if (filter.ranks?.length > 0) filtered = true;
+        if (filter.fails === false) filtered = true;
+        if (filter.mods?.array?.length > 0) filtered = true;
+
+        Object.keys(filter).forEach((key) => {
+            if (key === "acc") return;
+            if (
+                filter[key].min &&
+                (filter[key].min !== 0 || filter[key].max !== 0)
+            ) {
+                filtered = true;
+            }
+        });
     }
 </script>
 
@@ -151,7 +180,7 @@
     </div>
     <div class="buttons">
         <button type="submit" onclick={applyFilter}>Apply Filter</button>
-        <button onclick={resetFilter}>Clear Filter</button>
+        <button onclick={clearFilter}>Clear Filter</button>
     </div>
 </form>
 
@@ -216,7 +245,14 @@
         border: none;
         border-radius: 20px;
         padding: 0.4rem;
+        transition: 0.25s;
     }
+
+    .buttons button:hover {
+        background: var(--background-3);
+        cursor: pointer;
+    }
+
     .beatmap-id,
     input[type="text"] {
         font-size: 1rem;

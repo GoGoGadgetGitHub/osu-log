@@ -1,4 +1,3 @@
-const { json } = require("express");
 const { db, dbQuery, pgp } = require("../database.js");
 
 async function insertOrUpdateStats(stat, osu_user_id, sessionID) {

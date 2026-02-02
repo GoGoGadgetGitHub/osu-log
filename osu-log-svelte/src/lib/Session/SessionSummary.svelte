@@ -2,24 +2,20 @@
     import { A, B, C, D, F, S, X, Sh, Xh } from "$lib";
 
     let gradeIcons = { X, XH: Xh, S, SH: Sh, A, B, C, D };
-    let { sessionScores } = $props();
+    let { sessionScores, filtered } = $props();
     let { sr, acc, bpm, pp, passes, fails, plays, playtime } = $derived(
         sessionScores.meta ? sessionScores.meta.stats : {},
     );
-    const { topStats, bottomStats } = $derived({
-        topStats: [
-            { name: "Stars", stat: sr.avg },
-            { name: "Accuracy", stat: acc.avg * 100 },
-            { name: "BPM", stat: bpm.avg },
-            { name: "PP", stat: pp.avg },
-        ],
-        bottomStats: [
-            { name: "Playtime", stat: formatSeconds(playtime) },
-            { name: "Passes", stat: passes },
-            { name: "Fails", stat: fails },
-            { name: "Plays", stat: plays },
-        ],
-    });
+    let stats = $derived([
+        { name: "Stars", stat: sr.avg },
+        { name: "Accuracy", stat: acc.avg * 100 },
+        { name: "BPM", stat: bpm.avg },
+        { name: "PP", stat: pp.avg },
+        { name: "Playtime", stat: formatSeconds(playtime) },
+        { name: "Passes", stat: passes },
+        { name: "Fails", stat: fails },
+        { name: "Plays", stat: plays },
+    ]);
 
     let grades = $derived(sessionScores.meta.stats.gradeCounts);
 
@@ -44,24 +40,20 @@
     }
 </script>
 
-{$inspect(sr, acc, bpm, pp, passes, fails, plays, playtime)}
-
 <div class="container" id="summary">
     {#if sessionScores.meta}
-        <h2>Session Summary</h2>
+        <h2>Session Summary{filtered ? " (filtered)" : ""}</h2>
         <div class="stats">
-            {#each topStats as { name, stat }}
+            {#each stats as { name, stat }}
                 <span class="stat">
                     <span>{name}</span>
-                    <span class={name.toLowerCase()}>{stat.toFixed(2)}</span>
-                </span>
-            {/each}
-        </div>
-        <div class="stats">
-            {#each bottomStats as { name, stat }}
-                <span class="stat">
-                    <span>{name}</span>
-                    <span class={name.toLowerCase()}>{stat}</span>
+                    {#if name === "Playtime"}
+                        <span class={name.toLowerCase()}>{stat}</span>
+                    {:else}
+                        <span class={name.toLowerCase()}
+                            >{Number(stat).toFixed(2)}</span
+                        >
+                    {/if}
                 </span>
             {/each}
         </div>
@@ -132,9 +124,9 @@
         display: flex;
         flex-direction: row;
         align-items: center;
-        justify-content: space-evenly;
+        justify-content: center;
         flex-wrap: wrap;
-        gap: 1rem;
+        gap: 1.5rem;
     }
 
     .grades {
