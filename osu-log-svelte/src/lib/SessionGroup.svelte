@@ -11,8 +11,6 @@
     let filtered = $state(false);
 </script>
 
-{$inspect("filter applied", filtered)}
-
 <SessionControls
     bind:error
     bind:sessionScores

@@ -1,7 +1,10 @@
 osu-log-backend/.env
 
 */node_modules
+*/package-lock.json
+.gitignore
 
 osu-log-backend/bin
 osu-log-svelte/README.md
+osu-log-svelte/build
 osu-log-svelte/.svelte-kit
