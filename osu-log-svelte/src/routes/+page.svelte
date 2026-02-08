@@ -19,7 +19,9 @@
     onclick={async () => {
         let resp;
         try {
-            resp = await axios.get("http://localhost:3000/get-user-data/saaiz");
+            resp = await axios.get(
+                `${import.meta.env.VITE_API_BASE}/get-user-data/saaiz`,
+            );
         } catch (e) {
             console.log(e);
         } finally {
