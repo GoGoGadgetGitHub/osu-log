@@ -19,7 +19,7 @@
 		loading = true;
 		let resp;
 		try {
-			resp = await axios.get(`http://localhost:3000/track/${value}`);
+			resp = await axios.get(`${import.meta.env.VITE_API_BASE}/track/${value}`);
 		} catch (e) {
 			console.log(e);
 			error = `Could not fetch user data for ${value}`;

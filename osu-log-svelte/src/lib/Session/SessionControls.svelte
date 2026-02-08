@@ -53,7 +53,7 @@
 
         try {
             const resp = await axios.get(
-                `http://localhost:3000/get-sessions/${userData.id}`,
+                `${import.meta.env.VITE_API_BASE}/get-sessions/${userData.id}`,
             );
             sessions = resp.data;
         } catch (e) {
@@ -77,7 +77,7 @@
 
         try {
             const resp = await axios.post(
-                `http://localhost:3000/get-scores/${userData.id}/`,
+                `${import.meta.env.VITE_API_BASE}/get-scores/${userData.id}/`,
                 {
                     filter: {
                         sessions: sessionList,
@@ -211,7 +211,6 @@
     }
 </script>
 
-<!--HTML-->
 {#snippet CalanderButtonWithSession(date, selectedClass)}
     <span class="date has-sessions {selectedClass}">
         <button

@@ -17,7 +17,6 @@
 
 <button
     onclick={async () => {
-        console.log("hello world");
         let resp;
         try {
             resp = await axios.get(

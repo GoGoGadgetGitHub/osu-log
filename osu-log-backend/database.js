@@ -5,7 +5,7 @@ const connection = {
   host: "localhost",
   port: 5432,
   database: "TestDatabase",
-  user: process.env.USER,
+  user: process.env.PGUSER,
   password: process.env.PGPASSWORD,
   max: 30,
 };
