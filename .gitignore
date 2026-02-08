@@ -1,5 +1,5 @@
 osu-log-backend/.env
-osu-log-frontend/.env
+osu-log-svelte/.env
 
 */node_modules
 .gitignore

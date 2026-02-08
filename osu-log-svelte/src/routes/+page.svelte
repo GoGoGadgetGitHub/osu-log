@@ -21,7 +21,7 @@
         let resp;
         try {
             resp = await axios.get(
-                `${import.meta.env.VITE_API_BASE}/get-user-data/saaiz`,
+                `${import.meta.env.VITE_API_BASE || "api"}/get-user-data/saaiz`,
             );
         } catch (e) {
             console.log(e);
