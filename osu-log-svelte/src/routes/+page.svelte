@@ -19,19 +19,7 @@
     onclick={async () => {
         let resp;
         try {
-            resp = await axios.post(
-                `http://localhost:3000/get-scores/3982856/`,
-                {
-                    filter: {
-                        sessions: [0, 1, 2],
-                        fails: true,
-                        mods: {
-                            array: ["HR"],
-                            exclusive: true,
-                        },
-                    },
-                },
-            );
+            resp = await axios.get("http://localhost:3000/get-user-data/saaiz");
         } catch (e) {
             console.log(e);
         } finally {
