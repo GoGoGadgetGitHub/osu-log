@@ -4,7 +4,7 @@ const err = require("./errors.js");
 const connection = {
   host: "localhost",
   port: 5432,
-  database: "TestDatabase",
+  database: process.env.PGNAME,
   user: process.env.PGUSER,
   password: process.env.PGPASSWORD,
   max: 30,
