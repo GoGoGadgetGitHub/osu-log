@@ -1,17 +1,23 @@
 #!/bin/bash
-set -e  # Exit immediately if a command fails
+set -e
 
-cd /home/saai/osu-log
-git pull
+PROJECT_ROOT="/home/saai/osu-log"
 
-cd osu-log-svelte
+echo "Updating code..."
+cd $PROJECT_ROOT
+git pull origin main
+
+echo "Building Svelte Frontend..."
+cd "$PROJECT_ROOT/osu-log-svelte"
 npm install
 npm run build
 
-cd osu-log-backend
+echo "Setting up Backend..."
+cd "$PROJECT_ROOT/osu-log-backend"
 npm install
 
-# These will only run if everything above succeeded
-echo "Build complete!"
+echo "Restarting Services..."
 sudo systemctl restart osu-log-frontend
 sudo systemctl restart osu-log-backend
+
+echo "✅ Build and Deployment complete!"
