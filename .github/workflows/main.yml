@@ -1,0 +1,37 @@
+name: Deploy on digital ocean
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: webfactory/ssh-agent
+        uses: webfactory/ssh-agent@0.9.0
+        with:
+          ssh-private-key: ${{secrets.SSH_PRIVATE_KEY}}
+
+      - name: Add Known Hosts
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_KNOWN_HOSTS }}" >> ~/.ssh/known_hosts
+
+      - name: Deploy to Droplet
+        run: |
+          ssh ${{secrets.SSH_USER}}@{{ secrets.SSH_HOSTS }} "{{secrets.DEPLOY_PATH}}"
+
+      - name: Check Website Health
+        run: |
+          sleep 10
+          F_STATUS=$(curl -Lo /dev/null -s -w "%{http_code}" https://osu-log.online)
+          B_STATUS=$(curl -Lo /dev/null -s -w "%{http_code}" https://osu-log.online/api)
+          if [ "${B_STATUS}" -ne 200 ] && ["${F_STATUS}" -ne 200]; then
+            echo "CRITICAL: App is not responding with 200 OK"
+            echo "BACKEND: ${B_STATUS}"
+            echo "FRONTEND: ${F_STATUS}"
+            exit 1
+          fi
