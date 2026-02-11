@@ -9,12 +9,12 @@ git pull origin main
 
 echo "Building Svelte Frontend..."
 cd "$PROJECT_ROOT/osu-log-svelte"
-/usr/local/npm install
-/usr/local/npm run build
+/usr/local/bin/npm install
+/usr/local/bin/npm run build
 
 echo "Setting up Backend..."
 cd "$PROJECT_ROOT/osu-log-backend"
-/usr/local/npm install
+/usr/local/bin/npm install
 
 echo "Restarting Services..."
 sudo systemctl restart osu-log-frontend
