@@ -15,7 +15,6 @@
     let initial = $state(true);
 </script>
 
-<!-- Button for testing endpoints
 <button
     onclick={async () => {
         let resp;
@@ -32,7 +31,6 @@
 >
     test
 </button>
--->
 
 {#if initial || error}
     <div transition:fade class="initial">
