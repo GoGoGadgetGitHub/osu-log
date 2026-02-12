@@ -8,38 +8,29 @@
     import Logo from "$lib/Svg/Logo.svelte";
     import CornerNav from "$lib/UIComponents/CornerNav.svelte";
     import axios from "axios";
+    import Info from "$lib/UIComponents/Info.svelte";
+    import { DoubleTime } from "$lib";
 
+    let dummyUsername = $state("");
     let userData = $state("");
     let loading = $state(false);
     let error = $state("");
     let initial = $state(true);
 </script>
 
-<!--
-<button
-    onclick={async () => {
-        let resp;
-        try {
-            resp = await axios.get(
-                `${import.meta.env.VITE_API_BASE}/get-user-data/saaiz`,
-            );
-        } catch (e) {
-            console.log(e);
-        } finally {
-            console.log(resp.data);
-        }
-    }}
->
-    test
-</button>
--->
-
 {#if initial || error}
     <div transition:fade class="initial">
         <div class="logo">
             <Logo />
         </div>
-        <Username bind:userData bind:initial bind:error bind:loading />
+        <Username
+            {dummyUsername}
+            bind:userData
+            bind:initial
+            bind:error
+            bind:loading
+        />
+        <Info bind:dummyUsername />
     </div>
 {/if}
 
@@ -74,12 +65,13 @@
         padding: 1rem;
         box-sizing: border-box;
     }
+
     .initial {
+        width: 370px;
         background: unset;
-        position: absolute;
-        top: 50vh;
-        left: 50vw;
-        translate: -50% -50%;
+        position: fixed;
+        top: calc(50% - 250px / 2);
+        left: calc(50% - 370px / 2);
     }
 
     .logo {
@@ -100,9 +92,11 @@
             row-gap: 1rem;
         }
     }
+
     :global(html) {
         scroll-behavior: smooth;
     }
+
     @media (prefers-reduced-motion: reduce) {
         :global(html) {
             scroll-behavior: auto;
