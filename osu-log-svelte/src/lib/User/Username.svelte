@@ -38,6 +38,7 @@
 	}
 
 	async function trackClicked() {
+		dummyUsername = "";
 		getUserData(user);
 	}
 </script>
@@ -45,7 +46,7 @@
 <div class="username">
 	<h2>Enter your username!</h2>
 	<input placeholder="Enter your osu username" type="text" bind:value={user} />
-	<button onclick={getUserData}>Track!</button>
+	<button onclick={trackClicked}>Track!</button>
 	{#if error}
 		<p>{error}</p>
 	{/if}

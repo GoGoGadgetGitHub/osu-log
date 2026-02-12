@@ -304,10 +304,10 @@
             <div class="grid">
                 {#each Object.keys(sessions) as day}
                     {#if sessions[day].active}
-                        {#each sessions[day].sessions as session (session.session_id)}
+                        {#each sessions[day].sessions as session}
                             <label class="session-selector-label">
                                 <span class="id">
-                                    {session.id}
+                                    {session.session_id}
                                 </span>
                                 <span>
                                     {session.plays}
@@ -441,14 +441,25 @@
     .date button:hover {
         background: var(--background-3);
     }
-
-    .date.has-sessions button {
-        color: var(--hover);
-        background-color: color-mix(
-            in srgb,
-            var(--hover) 10%,
-            var(--background-2)
-        );
+    .date.has-sessions {
+        button {
+            color: var(--hover);
+            background-color: color-mix(
+                in srgb,
+                var(--hover) 10%,
+                var(--background-2)
+            );
+            &:hover {
+                cursor: pointer;
+            }
+        }
+        &:not(.selected) button:hover {
+            background-color: color-mix(
+                in srgb,
+                var(--hover) 40%,
+                var(--background-2)
+            );
+        }
     }
 
     :global(.date.has-sessions.selected button) {
