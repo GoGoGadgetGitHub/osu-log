@@ -15,7 +15,7 @@
     }
 
     function fillUsername(open) {
-        dummyUsername = "mrekk";
+        dummyUsername = "Harumiii";
     }
 
     function buttonClicked(open) {
@@ -40,14 +40,15 @@
             <p>
                 <a href="https://osu.ppy.sh/">osu!</a> is a popular open source
                 rhythm game. This web app aims to assit players in tracking and
-                analysing their improvment by persisting scores collected from
-                the osu API in a databse for data visulisaion.
+                analysing thier gameplay habits by saving thier scores (fetched
+                with the osu API) in a database.
                 <br />
                 <br />
-                If you click the button bellow, it will automatically show the statistics
-                for mrekk, osu's curent #1 player
+                If you click the button bellow, it will automatically show the profile
+                a player to showcase the app
             </p>
-            <button class="will-do" onclick={buttonClicked}>Will do</button>
+            <button class="will-do" onclick={buttonClicked}>Let's do it!</button
+            >
         </div>
     </div>
 {/if}
