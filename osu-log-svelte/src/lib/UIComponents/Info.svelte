@@ -14,11 +14,11 @@
         active = false;
     }
 
-    function fillUsername(open) {
-        dummyUsername = "Harumiii";
+    function fillUsername() {
+        dummyUsername = "zylice";
     }
 
-    function buttonClicked(open) {
+    function buttonClicked() {
         fillUsername();
         hideModal();
     }
