@@ -44,8 +44,8 @@
                 with the osu API) in a database.
                 <br />
                 <br />
-                If you click the button bellow, it will automatically show the profile
-                a player to showcase the app
+                If you click the button bellow, it will automatically show the profile of
+                a player to showcase the app.
             </p>
             <button class="will-do" onclick={buttonClicked}>Let's do it!</button
             >
