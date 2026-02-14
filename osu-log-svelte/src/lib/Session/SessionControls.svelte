@@ -202,10 +202,10 @@
         }
     }
 
-    function toggleSession(e) {
+    function toggleSession(e, day, sessionID) {
         const checkbox = e.target;
         let session = sessions[day].sessions.filter(
-            (session) => session.session_id === id,
+            (session) => session.session_id === sessionID,
         )[0];
         session.active = checkbox.checked;
     }
@@ -315,9 +315,15 @@
                                 </span>
                                 <Toggle
                                     color="var(--hover)"
-                                    callback={toggleSession}
+                                    callback={(e) => {
+                                        toggleSession(
+                                            e,
+                                            day,
+                                            session.session_id,
+                                        );
+                                    }}
                                     cls="session-selector"
-                                    data={session.id}
+                                    data={day}
                                     checked="true"
                                 />
                             </label>
