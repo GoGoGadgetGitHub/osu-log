@@ -146,7 +146,6 @@ function generateGraphData(scores) {
       };
     });
   }
-
   return graphData;
 }
 
@@ -180,7 +179,7 @@ const scoreMap = {
     return score.score.accuracy * 100;
   },
   pass: (score) => {
-    return score.score.pass_percentage;
+    return score.score.passed_percentage;
   },
 };
 

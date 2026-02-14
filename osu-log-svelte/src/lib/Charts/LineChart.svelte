@@ -51,7 +51,7 @@
         {
             type: "pass",
             name: "Pass",
-            color: "#2AD246FF",
+            color: "#2AB6D2FF",
         },
     ];
 
