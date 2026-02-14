@@ -54,7 +54,7 @@ You'll see a calendar with orange highlighted days.
 
 <img width="471" height="371" alt="2026-02-14_14-02-1771071129" src="https://github.com/user-attachments/assets/81937fe9-158b-4592-846f-01c987d3c27a" />
 
-These are the days on which you have sessions logged. Once you click on a day, sessions for that day will all be added to the current pool of scores your viewing, all of which you can see in the table.
+These are the days on which you have sessions logged. Once you click on a day, sessions for that day will all be added to the current pool of scores your viewing, all of which you can seen in the table.
 
 <img width="985" height="879" alt="2026-02-14_14-02-1771071293" src="https://github.com/user-attachments/assets/969480de-05fc-4d1d-ba38-d9e7ac7b0881" />
 
