@@ -4,12 +4,12 @@
     import Star from "$lib/Svg/Star.svelte";
     import LargeLoader from "$lib/UIComponents/Loaders/LargeLoader.svelte";
     import SessionGroup from "$lib/SessionGroup.svelte";
-    import { slide, fade } from "svelte/transition";
     import Logo from "$lib/Svg/Logo.svelte";
     import CornerNav from "$lib/UIComponents/CornerNav.svelte";
-    import axios from "axios";
     import Info from "$lib/UIComponents/Info.svelte";
-    import { DoubleTime } from "$lib";
+    import Footer from "./Footer.svelte";
+    import { slide, fade } from "svelte/transition";
+    import axios from "axios";
 
     let dummyUsername = $state("");
     let userData = $state("");
@@ -39,9 +39,13 @@
 {/if}
 
 {#if !initial && !loading && userData}
-    <div class="logo small">
-        <Logo />
-    </div>
+    <header>
+        <div class="logo small">
+            <a href>
+                <Logo />
+            </a>
+        </div>
+    </header>
     <div transition:slide class="main">
         <Username bind:userData bind:initial bind:error bind:loading />
         <div class="profile-and-session">
@@ -51,6 +55,8 @@
     </div>
     <CornerNav />
 {/if}
+
+<Footer {initial} />
 
 <style>
     @import "src/css/global.css";
@@ -66,11 +72,15 @@
         box-sizing: border-box;
     }
 
+    header {
+        padding: 0.5rem;
+    }
+
     .initial {
         width: 370px;
         background: unset;
         position: fixed;
-        top: calc(50% - 250px / 2);
+        top: calc(50% - 400px / 2);
         left: calc(50% - 370px / 2);
     }
 

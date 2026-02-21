@@ -1,6 +1,5 @@
 <script>
 	import axios from "axios";
-	import { goto } from "$app/navigation";
 
 	let {
 		userData = $bindable(""),
@@ -44,7 +43,7 @@
 </script>
 
 <div class="username">
-	<h2>Enter your username!</h2>
+	<h1>Enter your username!</h1>
 	<input placeholder="Enter your osu username" type="text" bind:value={user} />
 	<button onclick={trackClicked}>Track!</button>
 	{#if error}
@@ -58,6 +57,10 @@
 		margin: 0 auto;
 		color: var(--foreground);
 		text-align: center;
+	}
+
+	.username h1 {
+		font-size: 20px;
 	}
 
 	.username p {
