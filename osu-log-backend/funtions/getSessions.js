@@ -26,8 +26,6 @@ async function getSessions(osu_user_id) {
     throw e;
   }
 
-  console.log(counts);
-
   sessions.map((session, index) => {
     session["plays"] = counts[index].plays;
     session.set_at = dateFormatter.format(session.set_at);

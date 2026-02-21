@@ -47,8 +47,6 @@ async function generateStats(sessionID, osu_user_id, where, params) {
     params = { sessionID, osu_user_id: osu_user_id.toString() };
   }
 
-  console.log(where);
-
   let stats, gradeCounts;
   try {
     const query = `
@@ -160,8 +158,6 @@ async function countGrades(where, params) {
     console.error("Error when counting grades for session...");
     throw e;
   }
-
-  console.log(result);
 
   const gradeCounts = [];
   Object.keys(result).forEach((key) => {

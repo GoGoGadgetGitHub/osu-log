@@ -235,8 +235,6 @@ function calculatePassedStats(score) {
     sum += value;
   }
 
-  console.log(score.beatmapset.title, sum / max_sum, score.passed);
-
   const perc = sum / max_sum;
   const total_length = score.beatmap.hit_length;
   const length = Math.floor(total_length * perc);
