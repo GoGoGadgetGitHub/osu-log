@@ -13,14 +13,19 @@
 <div class="info">
     <h2>What am I looking at?</h2>
     <p>
-        <a href="https://osu.ppy.sh/">osu!</a> is a popular open-source rhythm
-        game. This web app helps players track and analyse their gameplay habits
-        by saving their scores — fetched through the osu! API — in a database
-        and providing tools to explore and analyse this data.
-
-        <br /><br />
-
-        Click the button below to automatically load a player profile.
+        <a href="https://osu.ppy.sh/">osu!</a> is a popular open-source rhythm game.
+        This web app helps players track and analyse their gameplay habits by saving
+        their scores — fetched through the osu! API — in a database and providing
+        tools to explore and analyse this data.
+    </p>
+    <p>
+        If you have an osu account just enter your username and click <b
+            >Track!</b
+        >
+    </p>
+    <p>
+        If you don't and you just want to see how this app works, then click the
+        below and a player profile will automatically be loaded.
     </p>
     <button class="lets-do-it" onclick={buttonClicked}>Let's do it!</button>
 </div>
