@@ -12,7 +12,7 @@ require("dotenv").config();
 //setting up rate limiting
 const limiter = rateLimit({
   windowMs: 3 * 1000,
-  max: 3,
+  max: 6,
   keyGenerator: (req) =>
     req.headers["cf-connecting-ip"] || ipKeyGenerator(req.ip),
   standardHeaders: true,
