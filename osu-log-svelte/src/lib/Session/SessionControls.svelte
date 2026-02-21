@@ -230,8 +230,6 @@
     }
 </script>
 
-{$inspect(scoresLoading)}
-
 <div id="controls" transition:fade class="container">
     <div class="calander">
         {#if sessionsLoading}
