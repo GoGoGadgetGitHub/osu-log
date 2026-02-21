@@ -2,6 +2,7 @@
     import Left from "$lib/Svg/Left.svelte";
     import Right from "$lib/Svg/Right.svelte";
     import axios from "axios";
+    import axiosRetry, { isNetworkOrIdempotentRequestError } from "axios-retry";
     import { resolve } from "$app/paths";
     import { onMount } from "svelte";
     import { fade, slide } from "svelte/transition";
@@ -10,6 +11,7 @@
     import SessionFilter from "$lib/Filter/SessionFilter.svelte";
     import Toggle from "$lib/UIComponents/Toggle.svelte";
     import SmallLoader from "$lib/UIComponents/Loaders/SmallLoader.svelte";
+    import A from "$lib/Svg/ranks/A.svelte";
 
     const days = ["S", "M", "T", "W", "T", "F", "S"];
     const months = [
@@ -48,9 +50,24 @@
 
     let message = $state("Click on a highlited date :)");
 
+    axiosRetry(axios, {
+        retries: 5,
+        onRetry: (count, error, conf) => {
+            console.log("retrying");
+        },
+        retryCondition: (error) => {
+            return (
+                isNetworkOrIdempotentRequestError(error) ||
+                error.response?.status === 429
+            );
+        },
+        retryDelay: (count, error) => {
+            return axiosRetry.exponentialDelay(count);
+        },
+    });
+
     $effect(async () => {
         sessionsLoading = true;
-
         try {
             const resp = await axios.get(
                 `${import.meta.env.VITE_API_BASE}/get-sessions/${userData.id}`,
@@ -89,8 +106,12 @@
             if (resp.data.scores)
                 document.dispatchEvent(new Event("sessionScoresUpdated"));
         } catch (e) {
-            console.log(e);
-            return {};
+            if (e.status === 429) {
+                console.log("Too many requests");
+            } else {
+                console.log(e);
+                return {};
+            }
         } finally {
             scoresLoading = false;
         }
@@ -161,14 +182,12 @@
             sessions[day].sessions.forEach(
                 (session) => (session.active = false),
             );
-            e.target.parentElement.classList.remove("selected");
         } else {
             message = "";
             sessions[day].active = true;
             sessions[day].sessions.forEach(
                 (session) => (session.active = true),
             );
-            e.target.parentElement.classList.add("selected");
         }
     }
 
@@ -211,17 +230,7 @@
     }
 </script>
 
-{#snippet CalanderButtonWithSession(date, selectedClass)}
-    <span class="date has-sessions {selectedClass}">
-        <button
-            data-day={date.day}
-            data-month={date.month}
-            onclick={calButtonClicked}
-        >
-            {date.day}
-        </button>
-    </span>
-{/snippet}
+{$inspect(scoresLoading)}
 
 <div id="controls" transition:fade class="container">
     <div class="calander">
@@ -237,22 +246,27 @@
                     <Right />
                 </button>
             </div>
-            <div class="cal-display">
+            <div class="cal-display {scoresLoading ? 'disabled' : ''}">
                 <div class="rows">
                     {#each days as day}
                         <span class="date day">{day}</span>
                     {/each}
+
                     {#each dateNumbers as date}
                         {@const day = `${date.month + 1}/${date.day}/${year}`}
                         {#if sessions[day]}
-                            {#if sessions[day].active}
-                                {@render CalanderButtonWithSession(
-                                    date,
-                                    "selected",
-                                )}
-                            {:else}
-                                {@render CalanderButtonWithSession(date)}
-                            {/if}
+                            <span
+                                class="date has-sessions
+                                {sessions[day].active ? 'selected' : ''}"
+                            >
+                                <button
+                                    data-day={date.day}
+                                    data-month={date.month}
+                                    onclick={calButtonClicked}
+                                >
+                                    {date.day}
+                                </button>
+                            </span>
                         {:else}
                             <span class="date">
                                 <button>{date.day}</button>
@@ -379,6 +393,12 @@
         padding: 0.5rem;
         display: flex;
         flex-direction: column;
+        transition: 1s;
+    }
+
+    .cal-display.disabled {
+        opacity: 0.5;
+        pointer-events: none;
     }
 
     .selection {

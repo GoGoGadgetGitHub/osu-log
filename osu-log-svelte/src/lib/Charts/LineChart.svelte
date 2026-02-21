@@ -314,7 +314,6 @@
     }
 </script>
 
-<!--HTML-->
 <div class="line">
     <div class="chart-container">
         <canvas id="lineChart" {@attach chart}></canvas>
@@ -351,7 +350,6 @@
     </div>
 </div>
 
-<!--CSS-->
 <style>
     .chart-container {
         position: relative;

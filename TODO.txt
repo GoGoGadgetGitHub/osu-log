@@ -1,4 +1,12 @@
 Add more stats to profile component use bathbot as refrence
 
+Session compare / Graph overlay
+
+Add percentage
+
+Revese OD histogram direction
+
+Add "Passed Section" toggle to graph
+
 Add authentication and
 Figure out auto refresh logic for users
