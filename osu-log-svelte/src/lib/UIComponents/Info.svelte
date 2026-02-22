@@ -2,7 +2,7 @@
     let { dummyUsername = $bindable("") } = $props();
 
     function fillUsername() {
-        dummyUsername = "zylice";
+        dummyUsername = "mrekk";
     }
 
     function buttonClicked() {
@@ -24,8 +24,9 @@
         >
     </p>
     <p>
-        If you don't and you just want to see how this app works, then click the
-        below and a player profile will automatically be loaded.
+        If you don't have an account and you just want to see how this app
+        works, then click the button below and a player profile will
+        automatically be loaded.
     </p>
     <button class="lets-do-it" onclick={buttonClicked}>Let's do it!</button>
 </div>
