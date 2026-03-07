@@ -1,3 +1,4 @@
+/*TODO: move consistant styles here */
 :root {
 	--background-0: #0D0D10;
 	--background-1: #15151a;
@@ -11,6 +12,7 @@
 	--hover: #D2472A;
 
 	--radius: 15px;
+	/*TODO: make all transitions in project use this variable */
 	--transition: 0.3s;
 
 	--scores-table-template: 1fr 2fr 1fr 1fr 1fr 1.5fr 1fr 1fr;
@@ -18,12 +20,13 @@
 
 body {
 	background-color: var(--background-0);
+	/*TODO: Find a better font*/
 	font-family: sans-serif;
 	position: relative;
 }
 
 main {
-	background-color: var(--background);
+	background-color: var(--background-0);
 }
 
 a {

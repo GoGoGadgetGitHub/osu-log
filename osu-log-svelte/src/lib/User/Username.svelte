@@ -31,7 +31,11 @@
 			error = `Could not fetch user data for ${user}`;
 			loading = false;
 		} finally {
-			userData = resp.data;
+			if (!resp.data.rank_history) {
+				error = "This account has no history!";
+			} else {
+				userData = resp.data;
+			}
 			loading = false;
 		}
 	}

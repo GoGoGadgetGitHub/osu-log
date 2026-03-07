@@ -4,6 +4,7 @@
     import Star from "$lib/Svg/Star.svelte";
     import ScoresTable from "$lib/ScoresTable/ScoresTable.svelte";
     import { onMount } from "svelte";
+    import Toggle from "$lib/UIComponents/Toggle.svelte";
 
     onMount(() => {
         changeActiveDatasets();
@@ -27,6 +28,7 @@
                     ),
                 },
             },
+            color: "#D29A2A",
         },
         od: {
             minMax: getMinMax(sessionScores.meta.stats.od),
@@ -43,6 +45,7 @@
                     ),
                 },
             },
+            color: "#D2472AFF",
         },
         ar: {
             minMax: getMinMax(sessionScores.meta.stats.ar),
@@ -59,6 +62,7 @@
                     ),
                 },
             },
+            color: "#2A62D2FF",
         },
 
         bpm: {
@@ -76,6 +80,7 @@
                     ),
                 },
             },
+            color: "#2AD29AFF",
         },
     });
     let charts = $derived.by(() => {
@@ -104,6 +109,7 @@
                         },
                     },
                 },
+                backgroundColor: dataMap[key].color,
             };
         }
         return ret;
@@ -114,7 +120,7 @@
         const toggles = document.querySelectorAll(".toggle");
         for (const toggle of toggles) {
             if (!toggle.checked) continue;
-            datasets.push({ ...charts[toggle.dataset.set] });
+            datasets.push({ ...charts[toggle.dataset.value] });
         }
         return { datasets };
     });
@@ -125,8 +131,8 @@
         let xAxisKey;
         for (const toggle of toggles) {
             if (!toggle.checked) continue;
-            xAxisKey = Object.keys(dataMap[toggle.dataset.set].xAxis)[0];
-            scales[xAxisKey] = dataMap[toggle.dataset.set].xAxis[xAxisKey];
+            xAxisKey = Object.keys(dataMap[toggle.dataset.value].xAxis)[0];
+            scales[xAxisKey] = dataMap[toggle.dataset.value].xAxis[xAxisKey];
         }
         return scales;
     });
@@ -182,7 +188,8 @@
         };
     }
 
-    function changeActiveDatasets(e) {
+    function changeActiveDatasets() {
+        console.log("hello");
         const datasets = [];
         const newScales = {};
         const toggels = document.querySelectorAll(".toggle");
@@ -190,7 +197,7 @@
         for (const toggle of toggels) {
             if (!toggle.checked) continue;
 
-            const graphID = toggle.dataset.set;
+            const graphID = toggle.dataset.value;
             const chart = charts[graphID];
             datasets.push({ ...chart });
 
@@ -214,26 +221,26 @@
                 <li>
                     <label class="switch" for="toggle-{data}">
                         {#if data === "sr"}
-                            <input
-                                class="toggle"
+                            <Toggle
+                                cls="toggle"
                                 id="toggle-{data}"
-                                type="checkbox"
-                                checked
-                                data-set={data}
-                                onclick={(e) => changeActiveDatasets(e)}
+                                {data}
+                                callback={changeActiveDatasets}
+                                checked={true}
+                                color={dataMap[data].color}
                             />
                         {:else}
-                            <input
-                                class="toggle"
+                            <Toggle
+                                cls="toggle"
                                 id="toggle-{data}"
-                                type="checkbox"
-                                data-set={data}
-                                onclick={(e) => changeActiveDatasets(e)}
+                                {data}
+                                callback={changeActiveDatasets}
+                                color={dataMap[data].color}
                             />
                         {/if}
                         <div class="slider round"></div>
                     </label>
-                    {dataMap[data].label}
+                    <span>{dataMap[data].label}</span>
                 </li>
             {/each}
         </ul>
@@ -278,49 +285,5 @@
         display: flex;
         flex-direction: column;
         align-items: center;
-        gap: rem;
-    }
-
-    .switch {
-        position: relative;
-        height: 1.3rem;
-        width: 2.5rem;
-    }
-
-    .switch input {
-        display: none;
-    }
-
-    .slider {
-        border-radius: 20px;
-        background: var(--background-verylight);
-        position: absolute;
-        cursor: pointer;
-        bottom: 0;
-        left: 0;
-        top: 0;
-        right: 0;
-        transition: 0.25s;
-    }
-
-    .slider::before {
-        content: "";
-        background: var(--foreground);
-        position: absolute;
-        width: 1rem;
-        height: 1rem;
-        border-radius: 50%;
-        top: 50%;
-        left: 0.1rem;
-        transform: translate(0.2rem, -50%);
-        transition: 0.25s;
-    }
-
-    input:checked + .slider {
-        background: var(--hover);
-    }
-
-    input:checked + .slider::before {
-        transform: translate(1.1rem, -50%);
     }
 </style>

@@ -1,31 +1,25 @@
 <script>
-    let { name, radios, color, callback, defaultIndex } = $props();
+    let {
+        name,
+        options,
+        color,
+        selected = $bindable(),
+        defaultIndex,
+    } = $props();
 </script>
 
 <div style="--color: {color}" class="radio">
-    {#each radios as radio, i}
-        <label for="{name}-{radio}">
-            {#if i === defaultIndex}
-                <input
-                    id="{name}-{radio}"
-                    class="{name}-radio"
-                    type="radio"
-                    {name}
-                    onclick={callback}
-                    checked="true"
-                    data-radio={radio}
-                />
-            {:else}
-                <input
-                    id="{name}-{radio}"
-                    class="{name}-radio"
-                    type="radio"
-                    {name}
-                    onclick={callback}
-                    data-radio={radio}
-                />
-            {/if}
-            <span>{radio}</span>
+    {#each options as option, i}
+        <label for="{name}-{option}">
+            <input
+                id="{name}-{option}"
+                type="radio"
+                {name}
+                checked={defaultIndex === i ? "true" : "false"}
+                value={option}
+                bind:group={selected}
+            />
+            <span>{option}</span>
         </label>
     {/each}
 </div>

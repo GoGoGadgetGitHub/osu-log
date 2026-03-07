@@ -3,21 +3,12 @@
     import { onMount } from "svelte";
     import "chartjs-adapter-date-fns";
     import { linear } from "svelte/easing";
-    import { generateRegressionLine } from "./polynomial-reg.js";
     import Radio from "$lib/UIComponents/Radio.svelte";
     import Toggle from "$lib/UIComponents/Toggle.svelte";
     import { writable } from "svelte/store";
     import { callback } from "chart.js/helpers";
 
-    onMount(() => {
-        changeActiveDatasets();
-    });
-
-    let { sessionScores } = $props();
-    let lineChart;
-    const radios = ["line", "trend", "none"];
-
-    let configs = [
+    let chartConfigs = [
         {
             type: "pp",
             name: "PP",
@@ -50,74 +41,53 @@
         },
         {
             type: "pass",
-            name: "Pass",
+            name: "Pass %",
             color: "#2AB6D2FF",
         },
     ];
 
-    const scoreMap = {
-        sr: (score) => {
-            if (score.performance) return score.performance.attributes.stars;
-            else return score.score.beatmap.difficulty_rating;
-        },
-        song: (score) => score.score.beatmapset.title,
-        pp: (score) => {
-            if (score.score.pp) {
-                return score.score.pp;
-            }
-            if (score.performance) {
-                return score.performance.perf.pp;
-            }
-            return 0;
-        },
-        bpm: (score) => {
-            return score.score.beatmap.bpm;
-        },
-        speed: (score) => {
-            return score.performance.attributes.speed;
-        },
-        aim: (score) => {
-            return score.performance.attributes.aim;
-        },
-        acc: (score) => {
-            return score.score.accuracy * 100;
-        },
-        pass: (score) => {
-            return score.score.passed_percentage;
-        },
-    };
+    let lineChart;
+    let canvas;
 
-    let yAxes = $state({});
+    let { sessionScores } = $props();
 
-    const populateCharts = () => {
+    let chartMode = $state(
+        Object.fromEntries(
+            chartConfigs.map((config) => [config.type, "trend"]),
+        ),
+    );
+    let chartVisibility = $state(
+        Object.fromEntries(
+            chartConfigs.map((config) => [config.type, config.type === "pp"]),
+        ),
+    );
+    let chartMap = $derived.by(getChartMap);
+    let datasets = $derived.by(getDatasets);
+    let yAxes = $derived.by(getYAxes);
+
+    const modes = ["line", "trend", "none"];
+
+    function getChartMap() {
         if (!sessionScores.meta) return;
 
-        const ret = {};
+        const map = {};
 
-        for (const { type, name, color } of configs) {
-            const src = sessionScores.meta.graphData[type];
+        for (const { type, name, color } of chartConfigs) {
+            const graphData = sessionScores.meta.graphData[type];
 
-            const data = new Array(src.length);
-            const yValues = new Array(src.length);
+            const data = graphData.map((item) => ({
+                x: item.x,
+                y: item.y,
+                meta: item.meta,
+            }));
 
-            //make shallow copy of data that chart.js can mutate
-            for (let i = 0; i < src.length; i++) {
-                const {
-                    x,
-                    y,
-                    meta: { name, id, date },
-                } = src[i];
-
-                data[i] = { x, y, meta: { name, id, date } };
-                yValues[i] = y;
-            }
-
-            ret[name] = {
+            map[type] = {
+                name,
                 values: {
                     type: "scatter",
                     data,
                     label: name,
-                    yAxisID: name,
+                    yAxisID: type,
                     borderColor: color,
                 },
                 average: {
@@ -125,72 +95,77 @@
                     pointRadius: 0,
                     data: getAverageLine(
                         data.map((s) => s.y),
-                        10,
+                        5,
                     ),
                     label: `${name} Trend`,
-                    yAxisID: name,
+                    yAxisID: type,
                     borderColor: color,
                 },
             };
         }
-        return ret;
-    };
+        return map;
+    }
 
-    let charts = populateCharts();
-
-    let datasets = [];
-
-    function changeActiveDatasets() {
-        yAxes = {};
-        datasets = [];
-        const toggles = document.querySelectorAll(
-            ".line .toggle .switch input",
-        );
-
-        const radioSelection = {};
-        for (const { name } of configs) {
-            radioSelection[name] = document.querySelector(
-                `.${name}-radio:checked`,
-            );
-        }
-
-        for (const toggle of toggles) {
-            if (!toggle.checked) continue;
-
-            const chartName = toggle.dataset.value;
-            const chart = charts[chartName];
-            const selection = radioSelection[chartName];
-            const color = chart.values.borderColor;
-
-            yAxes[chart.values.yAxisID] = {
+    function getYAxes() {
+        let result = {};
+        for (const { type, color } of chartConfigs) {
+            if (!chartVisibility[type]) continue;
+            const chart = chartMap[type];
+            result[chart.values.yAxisID] = {
                 type: "linear",
                 display: true,
                 position: "right",
                 title: {
                     display: true,
-                    text: chartName,
+                    text: chart.name,
                 },
+                grid: { drawOnChartArea: false },
             };
-
-            const opacity = (color, opacity) => {
-                return `${color.slice(0, 7)}${opacity}`;
-            };
-
-            if (selection.dataset.radio === "line") {
-                chart.values.borderColor = opacity(color, "FF");
-                chart.values.type = "line";
-            } else if (selection.dataset.radio === "trend") {
-                chart.values.borderColor = opacity(color, "22");
-                chart.values.backgroundColor = opacity(color, "00");
-                chart.values.type = "scatter";
-                datasets.push({ ...chart.average });
-            } else if (selection.dataset.radio === "none") {
-                chart.values.borderColor = opacity(color, "FF");
-                chart.values.backgroundColor = opacity(color, "FF");
-                chart.values.type = "scatter";
-            }
-            datasets.push({ ...chart.values });
         }
+        return result;
+    }
+
+    function getDatasets() {
+        const result = [];
+
+        for (const { type, color } of chartConfigs) {
+            if (!chartVisibility[type]) continue;
+            const chart = chartMap[type];
+            const mode = chartMode[type];
+
+            const main = {
+                ...chart.values,
+                type: mode === "line" ? "line" : "scatter",
+                borderColor: color,
+                backgroundColor: "transparent",
+                borderWidth: mode === "line" ? 2 : 1,
+                pointRadius: mode === "line" ? 3 : 4,
+            };
+
+            if (mode === "trend") {
+                main.borderColor = withAlpha(color, 0.2);
+                result.push({
+                    ...chart.average,
+                    borderColor: color,
+                    pointRadius: 0,
+                    label: `${chart.name} Trend`,
+                });
+            } else if (mode === "none") {
+                main.backgroundColor = withAlpha(color, 0.15);
+            }
+
+            result.push(main);
+        }
+        return result;
+    }
+
+    function withAlpha(hex, alpha = 1) {
+        const [r, g, b] = [
+            hex.slice(1, 3),
+            hex.slice(3, 5),
+            hex.slice(5, 7),
+        ].map((x) => parseInt(x, 16));
+        return `rgba(${r}, ${g}, ${b}, ${alpha})`;
     }
 
     function getAverageLine(array, range) {
@@ -207,11 +182,6 @@
         return ret;
     }
 
-    document.addEventListener("sessionScoresUpdated", () => {
-        charts = populateCharts();
-        changeActiveDatasets();
-    });
-
     async function focusScore(click) {
         const points = lineChart.getElementsAtEventForMode(
             click,
@@ -219,6 +189,7 @@
             { intersect: true },
             true,
         );
+        console.log(points);
         const id = points[0].element.$context.raw.meta.id;
         const tableItem = document.querySelector(`#score-${id}`);
         tableItem.scrollIntoView({
@@ -253,97 +224,100 @@
         },
     };
 
-    function setupChart(node) {
-        lineChart = new Chart(node, {
-            data: { datasets },
-            plugins: [verticalLineHover],
-            options: {
-                scales: {
-                    x: {
-                        type: "linear",
-                        max: sessionScores.scores.length - 1,
+    $effect(() => {
+        if (!canvas) return;
+
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return;
+
+        if (lineChart) {
+            lineChart.data.datasets = datasets;
+            lineChart.options.scales = {
+                ...lineChart.options.scales,
+                ...yAxes,
+            };
+            console.log("updating chart");
+            lineChart.update("show");
+        } else {
+            lineChart = new Chart(ctx, {
+                data: { datasets },
+                options: {
+                    scales: {
+                        x: {
+                            type: "linear",
+                            title: { display: true, text: "Score #" },
+                            max: sessionScores.scores.length - 1,
+                        },
+                        ...yAxes,
                     },
-                    ...yAxes,
-                },
-                maintainAspectRatio: false,
-                interaction: {
-                    mode: "index",
-                    intersect: false,
-                },
-                plugins: {
-                    tooltip: {
-                        callbacks: {
-                            label: (ctx) => {
-                                const value =
-                                    Math.round(ctx.parsed.y * 100) / 100;
-                                return `${ctx.dataset.label}: ${value}`;
-                            },
-                            labelColor: function (ctx) {
-                                const color = configs.filter((config) => {
-                                    return config.name === ctx.dataset.label;
-                                })[0].color;
-                                return {
-                                    backgroundColor: color,
-                                    borderColor: color,
-                                };
-                            },
-                            title: (ctx) => {
-                                return ctx[0].raw.meta.name;
+                    maintainAspectRatio: false,
+                    interaction: {
+                        mode: "index",
+                        intersect: false,
+                    },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            filter: (tooltipItem) =>
+                                !tooltipItem.dataset.label.includes("Trend"),
+                            callbacks: {
+                                title: ([first]) =>
+                                    first?.raw?.meta?.name ?? "",
+                                label: (ctx) => {
+                                    const v =
+                                        Math.round(ctx.parsed.y * 100) / 100;
+                                    return `${ctx.dataset.label}: ${v}`;
+                                },
+                                labelColor: function (ctx) {
+                                    const color = chartConfigs.filter(
+                                        (config) => {
+                                            return (
+                                                config.name ===
+                                                ctx.dataset.label
+                                            );
+                                        },
+                                    )[0].color;
+                                    return {
+                                        backgroundColor: color,
+                                        borderColor: color,
+                                    };
+                                },
                             },
                         },
-                        filter: (ctx) => {
-                            return !ctx.dataset.label.includes("Trend");
-                        },
                     },
-                    legend: {
-                        display: false,
+                    onClick: (event, elements) => {
+                        if (!elements.length) return;
+                        const meta = elements[0].element.$context.raw.meta;
+                        if (!meta?.id) return;
+                        focusScoreById(meta.id);
                     },
                 },
-            },
-        });
-    }
-
-    function chart(node) {
-        if (lineChart) lineChart.destroy();
-
-        setupChart(node);
-        lineChart.canvas.addEventListener("click", focusScore);
-        return () => {
-            lineChart.destroy();
-        };
-    }
+            });
+        }
+    });
 </script>
 
 <div class="line">
     <div class="chart-container">
-        <canvas id="lineChart" {@attach chart}></canvas>
+        <canvas id="lineChart" bind:this={canvas}></canvas>
     </div>
     <div class="toggles">
-        {#each configs as { name, color }}
+        {#each chartConfigs as { name, type, color }}
             <div class="toggle">
                 <div class="switch">
                     <span>{name}</span>
-                    {#if name === "PP"}
-                        <Toggle
-                            data={name}
-                            callback={changeActiveDatasets}
-                            checked="true"
-                            {color}
-                        />
-                    {:else}
-                        <Toggle
-                            data={name}
-                            callback={changeActiveDatasets}
-                            {color}
-                        />
-                    {/if}
+                    <Toggle
+                        data={type}
+                        bind:checked={chartVisibility[type]}
+                        {color}
+                    />
                 </div>
                 <Radio
-                    {name}
-                    {radios}
+                    name={type}
+                    options={modes}
                     {color}
+                    bind:selected={chartMode[type]}
                     defaultIndex={1}
-                    callback={changeActiveDatasets}
                 />
             </div>
         {/each}
@@ -353,7 +327,6 @@
 <style>
     .chart-container {
         position: relative;
-        min-height: 30rem;
     }
 
     .chart-container canvas {
@@ -367,7 +340,8 @@
         background: var(--background-light);
         right: 1rem;
         align-items: center;
-        gap: 0.3rem;
+        column-gap: 1.5rem;
+        row-gap: 0.5rem;
         margin: auto;
         transition: 0.25s;
         display: flex;
@@ -379,7 +353,7 @@
         display: flex;
         flex-direction: column;
         align-items: center;
-        gap: 1rem;
+        gap: 0.3rem;
         padding: 2px;
     }
 
