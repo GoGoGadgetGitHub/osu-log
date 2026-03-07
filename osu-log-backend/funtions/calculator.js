@@ -45,9 +45,9 @@ async function calculatePerformanceForScores(scores) {
     };
 
     //I'm calculating the performance attributes for failed scores based off the beatmap object here because there seems to be a massive
-    //diffrence in the difficulty attributes based on the amount of passed objects.
+    //diffrence in the difficulty attributes when they are based on the amount of passed objects.
+    //
     //The saved attributes are all calculated on the entire map, so using that for failed scores does not seem to work.
-    //There might be somthing i'm missing...
     perf = score.passed
       ? new calc.Performance(performanceOptions).calculate(attributes)
       : new calc.Performance(performanceOptions).calculate(

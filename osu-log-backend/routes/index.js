@@ -10,11 +10,6 @@ const { getSessionsEndpoint } = require(
 const router = express.Router();
 const err = require("../errors.js");
 
-/* GET home page. */
-router.get("/", function(_req, res, _next) {
-  res.render("index", { title: "Express" });
-});
-
 router.get(
   "/get-user-data/:username",
   userDataEndpoint,
