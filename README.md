@@ -18,7 +18,6 @@ I, more than anyone, knows it's not always how much you play that matters but ho
     <ul>
       <li>Histogram mode for value distributions</li>
       <li>Line graph mode for tracking values over time</li>
-      <li>Toggle between per-score and per-session data points</li>
     </ul>
   </li>
 </ul>
